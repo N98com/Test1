@@ -1,6 +1,6 @@
 const COLORS: Record<string, string> = {
-  ledinbouwspotsleds: 'bg-amber-100 text-amber-800 ring-amber-600/20',
-  ecobright: 'bg-emerald-100 text-emerald-800 ring-emerald-600/20',
+  lisl: 'bg-amber-100 text-amber-800 ring-amber-600/20',
+  eb: 'bg-emerald-100 text-emerald-800 ring-emerald-600/20',
 };
 
 export function CompanyBadge({ companyId, name }: { companyId: string; name: string }) {

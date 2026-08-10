@@ -1,4 +1,4 @@
-# Voorraadbeheer — Ledinbouwspotsleds & Ecobright
+# Voorraadbeheer — LISL & EB
 
 Interface om voorraad van beide bedrijven over 4 magazijnen bij te houden.
 
@@ -14,7 +14,7 @@ Interface om voorraad van beide bedrijven over 4 magazijnen bij te houden.
 - **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels met artikel,
   bedrijf, batch en aantal, inclusief optie om een foutieve regel te verwijderen.
 
-De 2 bedrijven (Ledinbouwspotsleds, Ecobright) en 4 magazijnen liggen vast in
+De 2 bedrijven (LISL, EB) en 4 magazijnen liggen vast in
 `src/data/seed.ts`; elk artikel wordt gekoppeld aan precies 1 bedrijf, maar voorraad kan bij het
 inboeken altijd handmatig aan elk van de 4 magazijnen toegewezen worden.
 
