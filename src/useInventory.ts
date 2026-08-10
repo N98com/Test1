@@ -62,5 +62,22 @@ export function useInventory() {
     setStock((prev) => prev.filter((s) => s.id !== id));
   }
 
-  return { products, stock, addProduct, updateProduct, deleteProduct, addStock, deleteStock };
+  function removeStockQuantity(id: string, amount: number) {
+    setStock((prev) =>
+      prev
+        .map((s) => (s.id === id ? { ...s, quantity: Math.max(0, s.quantity - amount) } : s))
+        .filter((s) => s.quantity > 0),
+    );
+  }
+
+  return {
+    products,
+    stock,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addStock,
+    deleteStock,
+    removeStockQuantity,
+  };
 }

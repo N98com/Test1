@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import type { Company, Product, Warehouse } from '../types';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
-import { CompanyBadge } from './CompanyBadge';
+import { Field } from './Field';
+import { ProductPicker } from './ProductPicker';
 
 interface Props {
   products: Product[];
@@ -20,7 +21,6 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
   const [companyId, setCompanyId] = useState(companies[0]?.id ?? '');
   const [unitsPerBox, setUnitsPerBox] = useState('1');
 
-  const [productQuery, setProductQuery] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
 
   const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? '');
@@ -35,14 +35,6 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
     () => products.find((p) => p.id === selectedProductId) ?? null,
     [products, selectedProductId],
   );
-
-  const matchingProducts = useMemo(() => {
-    const q = productQuery.trim().toLowerCase();
-    if (!q) return products.slice(0, 8);
-    return products
-      .filter((p) => p.articleNumber.toLowerCase().includes(q) || p.ean.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [products, productQuery]);
 
   const effectiveUnitsPerBox = mode === 'existing' ? (selectedProduct?.unitsPerBox ?? 1) : Number(unitsPerBox) || 0;
   const boxesNum = Number(boxes) || 0;
@@ -171,36 +163,12 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
         </div>
       ) : (
         <div className="space-y-3">
-          <Field label="Zoek artikel op artikelnummer, EAN of omschrijving">
-            <input
-              value={productQuery}
-              onChange={(e) => {
-                setProductQuery(e.target.value);
-                setSelectedProductId('');
-              }}
-              className="input"
-              placeholder="Typ om te zoeken..."
-            />
-          </Field>
-          <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200">
-            {matchingProducts.length === 0 && (
-              <p className="p-3 text-sm text-slate-400">Geen artikelen gevonden.</p>
-            )}
-            {matchingProducts.map((p) => (
-              <button
-                type="button"
-                key={p.id}
-                onClick={() => setSelectedProductId(p.id)}
-                className={`flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50 ${selectedProductId === p.id ? 'bg-slate-100' : ''}`}
-              >
-                <span className="flex flex-col">
-                  <span className="font-medium text-slate-900">{p.articleNumber} — {p.description}</span>
-                  <span className="font-mono text-xs text-slate-400">{p.ean}</span>
-                </span>
-                <CompanyBadge companyId={p.companyId} name={companies.find((c) => c.id === p.companyId)?.name ?? ''} />
-              </button>
-            ))}
-          </div>
+          <ProductPicker
+            products={products}
+            companies={companies}
+            selectedProductId={selectedProductId}
+            onSelect={setSelectedProductId}
+          />
           {selectedProduct && (
             <p className="text-xs text-slate-500">
               Geselecteerd: <span className="font-medium text-slate-700">{selectedProduct.articleNumber}</span> · {selectedProduct.unitsPerBox} stuks/doos
@@ -277,14 +245,5 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
         Voorraad inboeken
       </button>
     </form>
-  );
-}
-
-function Field({ label, children, full }: { label: string; children: ReactNode; full?: boolean }) {
-  return (
-    <label className={`block ${full ? 'sm:col-span-2' : ''}`}>
-      <span className="mb-1 block text-xs font-medium text-slate-500">{label}</span>
-      {children}
-    </label>
   );
 }

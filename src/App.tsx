@@ -3,19 +3,21 @@ import { COMPANIES, WAREHOUSES } from './data/seed';
 import { useInventory } from './useInventory';
 import { SearchView } from './components/SearchView';
 import { StockForm } from './components/StockForm';
+import { StockOutForm } from './components/StockOutForm';
 import { WarehouseView } from './components/WarehouseView';
 
-type Tab = 'overview' | 'intake' | 'warehouses';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overzicht & zoeken' },
   { id: 'intake', label: 'Artikel toevoegen / inboeken' },
+  { id: 'outtake', label: 'Uitboeken' },
   { id: 'warehouses', label: 'Magazijnen' },
 ];
 
 function App() {
   const [tab, setTab] = useState<Tab>('overview');
-  const { products, stock, addProduct, addStock, deleteStock } = useInventory();
+  const { products, stock, addProduct, addStock, deleteStock, removeStockQuantity } = useInventory();
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -55,6 +57,15 @@ function App() {
               onAddStock={(productId, warehouseId, batchNumber, quantity) =>
                 addStock({ productId, warehouseId, batchNumber, quantity })
               }
+            />
+          )}
+          {tab === 'outtake' && (
+            <StockOutForm
+              products={products}
+              stock={stock}
+              companies={COMPANIES}
+              warehouses={WAREHOUSES}
+              onRemoveStock={removeStockQuantity}
             />
           )}
           {tab === 'warehouses' && (

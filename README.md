@@ -11,6 +11,9 @@ Interface om voorraad van beide bedrijven over 4 magazijnen bij te houden.
   EAN, gekoppeld bedrijf, aantal per volle doos) of een nieuwe batch inboeken bij een bestaand
   artikel. Bij het inboeken kies je altijd het magazijn en het batchnummer (maand + jaar), en kun
   je het aantal invullen via volle dozen × stuks/doos plus eventuele losse stuks.
+- **Uitboeken**: voorraad afboeken uit een specifieke batch/magazijn, bijvoorbeeld wanneer een
+  volle doos wordt aangebroken en ingepakt. Dit systeem houdt alleen volle dozen bij — uitgeboekte
+  stuks worden niet los bijgehouden.
 - **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels met artikel,
   bedrijf, batch en aantal, inclusief optie om een foutieve regel te verwijderen.
 
