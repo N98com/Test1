@@ -26,6 +26,10 @@ De 2 bedrijven (LISL, EB) en 4 magazijnen liggen vast in
 `src/data/seed.ts`; elk artikel wordt gekoppeld aan precies 1 bedrijf, maar voorraad kan bij het
 inboeken altijd handmatig aan elk van de 4 magazijnen toegewezen worden.
 
+De interface is responsive (tabnavigatie en tabellen scrollen binnen hun eigen kader op smalle
+schermen) en heeft een licht/donker thema-schakelaar rechtsboven in de header. De keuze wordt
+onthouden in de browser en volgt anders de systeeminstelling.
+
 ## Ontwikkelen
 
 ```bash

@@ -72,8 +72,8 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">Voor alle regels</h3>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Voor alle regels</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Magazijn">
             <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="input" required>
@@ -99,23 +99,23 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
             />
           </Field>
         </div>
-        <p className="mt-2 text-xs text-slate-500">Batchnummer: <span className="font-mono">{batchNumber}</span></p>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Batchnummer: <span className="font-mono">{batchNumber}</span></p>
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-slate-500">Artikelen</p>
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Artikelen</p>
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full min-w-[600px] divide-y divide-slate-200 text-sm dark:divide-slate-800">
+            <thead className="bg-slate-50 dark:bg-slate-800">
               <tr>
-                <th className="px-3 py-2 text-left font-semibold text-slate-600">Artikel</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600">Volle dozen</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600">Losse stuks</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600">Totaal</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Artikel</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Volle dozen</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Losse stuks</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Totaal</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
               {rows.map((row) => (
                 <tr key={row.key}>
                   <td className="px-3 py-2">
@@ -150,13 +150,13 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
                       placeholder="0"
                     />
                   </td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-900">{quantityFor(row)}</td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100">{quantityFor(row)}</td>
                   <td className="px-3 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => removeRow(row.key)}
                       disabled={rows.length <= 1}
-                      className="text-xs font-medium text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="text-xs font-medium text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30 dark:text-red-400 dark:hover:text-red-300"
                     >
                       Verwijder
                     </button>
@@ -169,19 +169,19 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
         <button
           type="button"
           onClick={addRow}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           + Regel toevoegen
         </button>
       </div>
 
       {message && (
-        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.startsWith('Kies') ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.startsWith('Kies') ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
           {message}
         </p>
       )}
 
-      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300">
         Bulk inboeken
       </button>
     </form>

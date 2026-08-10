@@ -101,14 +101,14 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
         <button
           type="button"
           onClick={() => setMode('new')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'new' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'new' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
         >
           Nieuw artikel
         </button>
         <button
           type="button"
           onClick={() => setMode('existing')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'existing' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'existing' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
         >
           Bestaand artikel (nieuwe batch)
         </button>
@@ -170,15 +170,15 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
             onSelect={setSelectedProductId}
           />
           {selectedProduct && (
-            <p className="text-xs text-slate-500">
-              Geselecteerd: <span className="font-medium text-slate-700">{selectedProduct.articleNumber}</span> · {selectedProduct.unitsPerBox} stuks/doos
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Geselecteerd: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedProduct.articleNumber}</span> · {selectedProduct.unitsPerBox} stuks/doos
             </p>
           )}
         </div>
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">Inboeken</h3>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Inboeken</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Magazijn">
             <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="input" required>
@@ -204,7 +204,7 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
             />
           </Field>
           <Field label="Batchnummer">
-            <input value={batchNumber} disabled className="input bg-slate-100 text-slate-500" />
+            <input value={batchNumber} disabled className="input" />
           </Field>
           <Field label="Aantal volle dozen">
             <input
@@ -227,21 +227,21 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
             />
           </Field>
           <Field label="Stuks per doos (indicatie)">
-            <input value={effectiveUnitsPerBox || ''} disabled className="input bg-slate-100 text-slate-500" />
+            <input value={effectiveUnitsPerBox || ''} disabled className="input" />
           </Field>
           <Field label="Totaal aantal stuks">
-            <input value={totalQuantity} disabled className="input bg-slate-100 font-semibold text-slate-900" />
+            <input value={totalQuantity} disabled className="input font-semibold text-slate-900! dark:text-slate-100!" />
           </Field>
         </div>
       </div>
 
       {message && (
-        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.startsWith('Kies') || message.startsWith('Selecteer') ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.startsWith('Kies') || message.startsWith('Selecteer') ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
           {message}
         </p>
       )}
 
-      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300">
         Voorraad inboeken
       </button>
     </form>
