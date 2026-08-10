@@ -28,3 +28,15 @@ export interface StockEntry {
   quantity: number;
   createdAt: string;
 }
+
+export type MovementType = 'in' | 'out' | 'correction';
+
+export interface Movement {
+  id: string;
+  type: MovementType;
+  productId: string;
+  warehouseId: string;
+  batchNumber: string;
+  quantity: number;
+  createdAt: string;
+}
