@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { Profile, Role } from '../types';
+import { Field } from './Field';
 
 interface ProfileRow {
   id: string;
@@ -20,6 +21,8 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+type Feedback = { text: string; type: 'error' | 'success' };
+
 interface Props {
   currentUserId: string;
 }
@@ -29,6 +32,11 @@ export function AccountsAdmin({ currentUserId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<Role>('user');
+  const [creating, setCreating] = useState(false);
+  const [createFeedback, setCreateFeedback] = useState<Feedback | null>(null);
 
   async function fetchProfiles() {
     const { data, error: fetchError } = await supabase
@@ -69,17 +77,71 @@ export function AccountsAdmin({ currentUserId }: Props) {
     setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, role } : p)));
   }
 
+  async function handleCreate(e: FormEvent) {
+    e.preventDefault();
+    setCreateFeedback(null);
+
+    const email = newEmail.trim();
+    if (!email || !email.includes('@')) {
+      setCreateFeedback({ text: 'Vul een geldig e-mailadres in.', type: 'error' });
+      return;
+    }
+
+    setCreating(true);
+    const { data, error: invokeError } = await supabase.functions.invoke('create-account', {
+      body: { email, role: newRole },
+    });
+    setCreating(false);
+
+    if (invokeError || data?.error) {
+      setCreateFeedback({ text: data?.error ?? invokeError?.message ?? 'Aanmaken is mislukt.', type: 'error' });
+      return;
+    }
+
+    setCreateFeedback({ text: `Uitnodiging verstuurd naar ${email}.`, type: 'success' });
+    setNewEmail('');
+    setNewRole('user');
+    fetchProfiles();
+  }
+
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-        <p className="mb-1 font-semibold text-slate-700 dark:text-slate-200">Nieuw account toevoegen</p>
-        <p>
-          Ga naar je Supabase-dashboard → <span className="font-mono">Authentication</span> →{' '}
-          <span className="font-mono">Users</span> → <span className="font-mono">"Invite user"</span> en vul het
-          e-mailadres in. De nieuwe gebruiker krijgt een e-mail om zelf een wachtwoord in te stellen en verschijnt
-          daarna automatisch hieronder met rol "Gebruiker" — die kun je hier aanpassen.
+      <form onSubmit={handleCreate} className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Nieuw account toevoegen</h3>
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+          <Field label="E-mailadres">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className="input"
+              placeholder="collega@bedrijf.nl"
+              required
+            />
+          </Field>
+          <Field label="Rol">
+            <select value={newRole} onChange={(e) => setNewRole(e.target.value as Role)} className="input">
+              <option value="user">Gebruiker</option>
+              <option value="admin">Admin</option>
+            </select>
+          </Field>
+          <button
+            type="submit"
+            disabled={creating}
+            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+          >
+            {creating ? 'Bezig...' : 'Account aanmaken'}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          De nieuwe collega krijgt een e-mail om zelf een wachtwoord in te stellen.
         </p>
-      </div>
+        {createFeedback && (
+          <p className={`mt-3 rounded-md px-3 py-2 text-sm ${createFeedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
+            {createFeedback.text}
+          </p>
+        )}
+      </form>
 
       {error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{error}</p>

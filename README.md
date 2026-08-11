@@ -6,7 +6,7 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 ## Functionaliteit
 
 - **Login & accounts**: de hele app zit achter een inlogscherm. Accounts worden door een
-  Admin aangemaakt (via het Supabase-dashboard, zie "Supabase-project opzetten" hieronder),
+  Admin aangemaakt via het formulier in het Accounts-scherm (stuurt een uitnodigingsmail),
   niet via self-signup.
 - **Rollen**:
   - **Admin**: alles, inclusief artikelen aanmaken/bewerken (artikelnummer, EAN,
@@ -30,8 +30,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   om een foutieve regel te verwijderen.
 - **Producten** (Admin): bestaande artikelen bewerken of verwijderen.
 - **Historie** (Admin): logboek van alle in-, uit- en correctieboekingen.
-- **Accounts** (Admin): overzicht van alle accounts met hun rol, met een dropdown om de
-  rol te wijzigen.
+- **Accounts** (Admin): nieuwe accounts uitnodigen via e-mail met een rol, plus een
+  overzicht van alle accounts met een dropdown om de rol te wijzigen.
 
 De interface is responsive (tabnavigatie en tabellen scrollen binnen hun eigen kader op
 smalle schermen) en heeft een licht/donker thema-schakelaar rechtsboven in de header.
@@ -49,10 +49,23 @@ authenticatie).
    ```sql
    update public.profiles set role = 'admin' where email = 'jouw-email@voorbeeld.nl';
    ```
-4. Nieuwe accounts voeg je later toe via Dashboard → Authentication → Users →
-   "Invite user" — de nieuwe gebruiker stelt zelf een wachtwoord in en krijgt automatisch
-   rol "Gebruiker", die een Admin daarna kan aanpassen in het Accounts-scherm van de app.
-5. Kopieer de **Project URL** en **anon/publishable key** (Project Settings → API).
+4. Kopieer de **Project URL** en **anon/publishable key** (Project Settings → API).
+5. Zet de Edge Function `create-account` live (nodig voor het "Nieuw account toevoegen"
+   formulier in het Accounts-scherm — hiermee kan een Admin zelf collega's uitnodigen
+   zonder de Supabase Dashboard te hoeven gebruiken):
+   - Dashboard → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"**
+   - Naam: `create-account`
+   - Plak de inhoud van `supabase/functions/create-account/index.ts` en klik **Deploy**
+   - Geen extra secrets nodig — Supabase geeft de functie automatisch toegang tot je
+     project (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+   - Alternatief zonder Dashboard-editor: `npx supabase functions deploy create-account`
+     (vereist inloggen met `npx supabase login` en het project linken).
+
+Zonder deze Edge Function werkt de rest van de app gewoon door — alleen het
+"Nieuw account toevoegen"-formulier geeft dan een foutmelding. Als tijdelijk alternatief
+kun je een account ook handmatig aanmaken via Dashboard → Authentication → Users →
+"Invite user"; die krijgt automatisch rol "Gebruiker", aan te passen in het
+Accounts-scherm.
 
 ## Ontwikkelen
 
