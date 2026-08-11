@@ -62,3 +62,80 @@ body {
     color: #64748b;
   }
 }
+
+/* Sticker labels: 150mm x 100mm (PostNL-formaat), Zebra-labelprinter */
+.sticker {
+  width: 150mm;
+  height: 100mm;
+  padding: 10mm 25mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+  break-after: page;
+}
+
+.sticker:last-child {
+  break-after: auto;
+}
+
+.sticker-box {
+  width: 100%;
+  border: 0.3mm solid #000000;
+  box-sizing: border-box;
+  padding: 2mm 3mm;
+  overflow: hidden;
+}
+
+.sticker-box-main {
+  height: 54mm;
+}
+
+.sticker-box-batch {
+  height: 20mm;
+  margin-top: 4mm;
+}
+
+.sticker-box-inner {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1mm;
+}
+
+.sticker-line {
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.08;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+
+@media print {
+  @page {
+    size: 150mm 100mm;
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .sticker-print-area,
+  .sticker-print-area * {
+    visibility: visible;
+  }
+
+  .sticker-print-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}

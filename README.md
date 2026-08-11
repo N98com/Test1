@@ -29,6 +29,10 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 - **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels, met optie
   om een foutieve regel te verwijderen.
 - **Producten** (Admin): bestaande artikelen bewerken of verwijderen.
+- **Stickers** (Admin): artikelen selecteren (nieuwste eerst) en labels genereren voor een
+  Zebra-labelprinter (150 × 100 mm, PostNL-formaat). Elke sticker toont artikelnummer,
+  omschrijving en aantal per doos in één kader en de batch in een tweede kader; de
+  lettergrootte per kader krimpt automatisch mee zodat de tekst altijd past.
 - **Historie** (Admin): logboek van alle in-, uit- en correctieboekingen.
 - **Accounts** (Admin): nieuwe accounts uitnodigen via e-mail met een rol, plus een
   overzicht van alle accounts met een dropdown om de rol te wijzigen.

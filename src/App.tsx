@@ -11,10 +11,11 @@ import { BulkOutakeForm } from './components/BulkOutakeForm';
 import { WarehouseView } from './components/WarehouseView';
 import { HistoryView } from './components/HistoryView';
 import { ProductsAdmin } from './components/ProductsAdmin';
+import { Stickers } from './components/Stickers';
 import { AccountsAdmin } from './components/AccountsAdmin';
 import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'history' | 'accounts';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'history' | 'accounts';
 type Mode = 'single' | 'bulk';
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => void }) {
@@ -112,6 +113,7 @@ function AuthenticatedApp({
     { id: 'outtake', label: 'Uitboeken' },
     { id: 'warehouses', label: 'Magazijnen' },
     ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
+    ...(isAdmin ? [{ id: 'stickers' as Tab, label: 'Stickers' }] : []),
     ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
     ...(isAdmin ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
@@ -220,6 +222,7 @@ function AuthenticatedApp({
                   onDeleteProduct={deleteProduct}
                 />
               )}
+              {tab === 'stickers' && isAdmin && <Stickers products={products} companies={companies} />}
               {tab === 'history' && isAdmin && (
                 <HistoryView movements={movements} products={products} companies={companies} warehouses={warehouses} />
               )}
