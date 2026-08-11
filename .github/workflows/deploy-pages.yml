@@ -26,13 +26,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Check Supabase secrets (diagnostic, prints no values)
-        run: |
-          if [ -n "$VITE_SUPABASE_URL" ]; then echo "VITE_SUPABASE_URL: SET (length ${#VITE_SUPABASE_URL})"; else echo "VITE_SUPABASE_URL: MISSING"; fi
-          if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "VITE_SUPABASE_ANON_KEY: SET (length ${#VITE_SUPABASE_ANON_KEY})"; else echo "VITE_SUPABASE_ANON_KEY: MISSING"; fi
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
