@@ -21,6 +21,7 @@ export function ProductSearchInput({ products, productId, onSelect, placeholder 
   const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setQuery(selectedProduct ? labelFor(selectedProduct) : '');
@@ -41,7 +42,8 @@ export function ProductSearchInput({ products, productId, onSelect, placeholder 
     window.addEventListener('resize', updateRect);
 
     function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current?.contains(e.target as Node)) return;
+      const target = e.target as Node;
+      if (wrapperRef.current?.contains(target) || dropdownRef.current?.contains(target)) return;
       setOpen(false);
       setQuery(selectedProduct ? labelFor(selectedProduct) : '');
     }
@@ -86,6 +88,7 @@ export function ProductSearchInput({ products, productId, onSelect, placeholder 
         rect &&
         createPortal(
           <div
+            ref={dropdownRef}
             style={{ position: 'fixed', top: rect.top, left: rect.left, width: Math.max(rect.width, 240) }}
             className="z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
           >

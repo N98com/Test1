@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import type { Company, Product } from '../types';
 import { CompanyBadge } from './CompanyBadge';
+import { Field } from './Field';
 
 interface Props {
   products: Product[];
   companies: Company[];
+  onAddProduct: (input: Omit<Product, 'id' | 'createdAt'>) => Promise<{ product: Product | null; error: string | null }>;
   onUpdateProduct: (id: string, patch: Partial<Omit<Product, 'id' | 'createdAt'>>) => Promise<string | null>;
   onDeleteProduct: (id: string) => Promise<string | null>;
 }
+
+type Feedback = { text: string; type: 'error' | 'success' };
 
 interface Draft {
   articleNumber: string;
@@ -27,13 +31,58 @@ function draftFor(product: Product): Draft {
   };
 }
 
-export function ProductsAdmin({ products, companies, onUpdateProduct, onDeleteProduct }: Props) {
+export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProduct, onDeleteProduct }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newArticleNumber, setNewArticleNumber] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newEan, setNewEan] = useState('');
+  const [newCompanyId, setNewCompanyId] = useState(companies[0]?.id ?? '');
+  const [newUnitsPerBox, setNewUnitsPerBox] = useState('1');
+  const [creating, setCreating] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
   const sorted = [...products].sort((a, b) => a.articleNumber.localeCompare(b.articleNumber));
+
+  function resetNewForm() {
+    setNewArticleNumber('');
+    setNewDescription('');
+    setNewEan('');
+    setNewUnitsPerBox('1');
+  }
+
+  async function handleCreate(e: FormEvent) {
+    e.preventDefault();
+    setFeedback(null);
+
+    if (!newArticleNumber.trim() || !newDescription.trim() || !newEan.trim() || !newCompanyId) {
+      setFeedback({ text: 'Vul artikelnummer, omschrijving, EAN en bedrijf in.', type: 'error' });
+      return;
+    }
+
+    setCreating(true);
+    const { product, error: createError } = await onAddProduct({
+      articleNumber: newArticleNumber.trim(),
+      description: newDescription.trim(),
+      ean: newEan.trim(),
+      companyId: newCompanyId,
+      unitsPerBox: Number(newUnitsPerBox) || 1,
+    });
+    setCreating(false);
+
+    if (createError || !product) {
+      setFeedback({ text: createError ?? 'Aanmaken van artikel is mislukt.', type: 'error' });
+      return;
+    }
+
+    resetNewForm();
+    setShowNewForm(false);
+    setFeedback({ text: `Artikel ${product.articleNumber} aangemaakt. Ga naar "Inboeken" om voorraad toe te voegen.`, type: 'success' });
+  }
 
   function startEdit(product: Product) {
     setError(null);
@@ -79,9 +128,85 @@ export function ProductsAdmin({ products, companies, onUpdateProduct, onDeletePr
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        Bewerk artikelnummer, EAN, omschrijving, bedrijf of doosinhoud van een bestaand product.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Bewerk artikelnummer, EAN, omschrijving, bedrijf of doosinhoud van een bestaand product.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setShowNewForm((v) => !v);
+            setFeedback(null);
+          }}
+          className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+        >
+          {showNewForm ? 'Annuleren' : '+ Nieuw artikel toevoegen'}
+        </button>
+      </div>
+
+      {showNewForm && (
+        <form onSubmit={handleCreate} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Artikelnummer">
+              <input
+                value={newArticleNumber}
+                onChange={(e) => setNewArticleNumber(e.target.value)}
+                className="input"
+                placeholder="bv. LED-SP-2700-01"
+                required
+              />
+            </Field>
+            <Field label="EAN-code">
+              <input
+                value={newEan}
+                onChange={(e) => setNewEan(e.target.value)}
+                className="input"
+                placeholder="bv. 8710000000000"
+                required
+              />
+            </Field>
+            <Field label="Korte omschrijving" full>
+              <input
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                className="input"
+                placeholder="bv. Inbouwspot rond wit 2700K"
+                required
+              />
+            </Field>
+            <Field label="Bedrijf">
+              <select value={newCompanyId} onChange={(e) => setNewCompanyId(e.target.value)} className="input" required>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Aantal per volle doos">
+              <input
+                type="number"
+                min={1}
+                value={newUnitsPerBox}
+                onChange={(e) => setNewUnitsPerBox(e.target.value)}
+                className="input"
+                required
+              />
+            </Field>
+          </div>
+          <button
+            type="submit"
+            disabled={creating}
+            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+          >
+            {creating ? 'Bezig...' : 'Artikel aanmaken'}
+          </button>
+        </form>
+      )}
+
+      {feedback && (
+        <p className={`rounded-md px-3 py-2 text-sm ${feedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
+          {feedback.text}
+        </p>
+      )}
 
       {error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{error}</p>
@@ -202,7 +327,7 @@ export function ProductsAdmin({ products, companies, onUpdateProduct, onDeletePr
 
       {sorted.length === 0 && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-          Nog geen artikelen. Voeg er een toe via "Artikel toevoegen / inboeken".
+          Nog geen artikelen. Klik op "+ Nieuw artikel toevoegen" om er een aan te maken.
         </p>
       )}
     </div>

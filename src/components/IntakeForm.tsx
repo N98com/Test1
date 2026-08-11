@@ -22,22 +22,27 @@ function newRow(): Row {
   return { key: Math.random().toString(36).slice(2), productId: '', boxes: '' };
 }
 
-export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
+export function IntakeForm({ products, warehouses, onAddStock }: Props) {
   const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? '');
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
-  const [rows, setRows] = useState<Row[]>([newRow(), newRow()]);
+  const [rows, setRows] = useState<Row[]>([newRow()]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const batchNumber = formatBatch(month, year);
 
   function updateRow(key: string, patch: Partial<Row>) {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  }
-
-  function addRow() {
-    setRows((prev) => [...prev, newRow()]);
+    setRows((prev) => {
+      const next = prev.map((r) => (r.key === key ? { ...r, ...patch } : r));
+      const idx = next.findIndex((r) => r.key === key);
+      const isLastRow = idx === next.length - 1;
+      const row = next[idx];
+      if (isLastRow && row.productId && (Number(row.boxes) || 0) > 0) {
+        next.push(newRow());
+      }
+      return next;
+    });
   }
 
   function removeRow(key: string) {
@@ -80,7 +85,7 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
       text: `${validRows.length} regel(s) ingeboekt in ${warehouses.find((w) => w.id === warehouseId)?.name} (batch ${batchNumber}).`,
       type: 'success',
     });
-    setRows([newRow(), newRow()]);
+    setRows([newRow()]);
   }
 
   return (
@@ -116,7 +121,9 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Artikelen</p>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Zoek een artikel en vul het aantal volle dozen in — er komt automatisch een nieuwe regel bij.
+        </p>
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
           <table className="w-full min-w-[600px] divide-y divide-slate-200 text-sm dark:divide-slate-800">
             <thead className="bg-slate-50 dark:bg-slate-800">
@@ -163,13 +170,6 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
             </tbody>
           </table>
         </div>
-        <button
-          type="button"
-          onClick={addRow}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          + Regel toevoegen
-        </button>
       </div>
 
       {feedback && (
@@ -183,7 +183,7 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
         disabled={submitting}
         className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
       >
-        {submitting ? 'Bezig...' : 'Bulk inboeken'}
+        {submitting ? 'Bezig...' : 'Voorraad inboeken'}
       </button>
     </form>
   );

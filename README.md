@@ -18,17 +18,22 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 - **Overzicht & zoeken**: zoek artikelen op artikelnummer, EAN of omschrijving. Toont per
   artikel direct de voorraad per magazijn (M1–M4) en het totaal. Een rij openklappen laat
   de batches (bv. `JUL/26`) per magazijn zien.
-- **Artikel toevoegen / inboeken**: nieuwe artikelen aanmaken (alleen Admin) of een nieuwe
-  batch inboeken bij een bestaand artikel. Bij het inboeken kies je altijd het magazijn en
-  het batchnummer (maand + jaar); het aantal is altijd volle dozen × stuks/doos — dit
-  systeem houdt alleen volle dozen bij, geen losse stuks. Met "Bulk" boek je in één keer
-  meerdere bestaande artikelen tegelijk in, elk met een zoekbalk om het artikel te vinden.
-- **Uitboeken**: voorraad afboeken uit een specifieke batch/magazijn, bijvoorbeeld wanneer
-  een volle doos wordt aangebroken en ingepakt. Dit systeem houdt alleen volle dozen bij.
-  Met "Bulk" boek je meerdere artikelen tegelijk uit, ook hier via een zoekbalk per regel.
+- **Artikel toevoegen / inboeken**: kies het magazijn en het batchnummer (maand + jaar)
+  voor de hele batch, en zoek daaronder per regel een bestaand artikel op (artikelnummer,
+  EAN of omschrijving). Het aantal is altijd volle dozen × stuks/doos — dit systeem houdt
+  alleen volle dozen bij, geen losse stuks. Zodra je bij de laatste regel het aantal dozen
+  invult, komt er automatisch een nieuwe lege regel bij, zodat je in één moeite door meerdere
+  artikelen kunt inboeken.
+- **Uitboeken**: zoek per regel een artikel, kies de batch/magazijn waaruit je afboekt
+  (bijvoorbeeld wanneer een volle doos wordt aangebroken en ingepakt) en vul het aantal
+  aangebroken dozen in — ook hier komt automatisch een nieuwe regel bij zodra je een regel
+  compleet hebt ingevuld.
 - **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels, met optie
   om een foutieve regel te verwijderen.
-- **Producten** (Admin): bestaande artikelen bewerken of verwijderen.
+- **Producten** (Admin): nieuwe artikelen aanmaken (artikelnummer, EAN, omschrijving,
+  bedrijf, doosinhoud) via "+ Nieuw artikel toevoegen", en bestaande artikelen bewerken of
+  verwijderen. Voorraad voor een nieuw artikel boek je daarna in via "Artikel toevoegen /
+  inboeken".
 - **Stickers** (Admin): artikelen selecteren (nieuwste eerst) en labels genereren voor een
   Zebra-labelprinter (150 × 100 mm, PostNL-formaat). Elke sticker toont artikelnummer,
   omschrijving en aantal per doos in één kader en de batch in een tweede kader; de

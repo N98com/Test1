@@ -22,17 +22,22 @@ function newRow(): Row {
   return { key: Math.random().toString(36).slice(2), productId: '', entryId: '', boxes: '' };
 }
 
-export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: Props) {
-  const [rows, setRows] = useState<Row[]>([newRow(), newRow()]);
+export function OutakeForm({ products, stock, warehouses, onRemoveStock }: Props) {
+  const [rows, setRows] = useState<Row[]>([newRow()]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   function updateRow(key: string, patch: Partial<Row>) {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  }
-
-  function addRow() {
-    setRows((prev) => [...prev, newRow()]);
+    setRows((prev) => {
+      const next = prev.map((r) => (r.key === key ? { ...r, ...patch } : r));
+      const idx = next.findIndex((r) => r.key === key);
+      const isLastRow = idx === next.length - 1;
+      const row = next[idx];
+      if (isLastRow && row.productId && row.entryId && (Number(row.boxes) || 0) > 0) {
+        next.push(newRow());
+      }
+      return next;
+    });
   }
 
   function removeRow(key: string) {
@@ -85,14 +90,15 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
     setSubmitting(false);
 
     setFeedback({ text: `${activeRows.length} regel(s) uitgeboekt.`, type: 'success' });
-    setRows([newRow(), newRow()]);
+    setRows([newRow()]);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
-        Gebruik dit voor meerdere artikelen tegelijk, bijvoorbeeld bij het inpakken van een order met
-        meerdere aangebroken dozen.
+        Gebruik dit als een volle doos wordt aangebroken en ingepakt. Dit systeem houdt alleen volle
+        dozen bij. Zoek een artikel, kies de batch en vul het aantal aangebroken dozen in — er komt
+        automatisch een nieuwe regel bij.
       </p>
 
       <div className="space-y-2">
@@ -165,13 +171,6 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
             </tbody>
           </table>
         </div>
-        <button
-          type="button"
-          onClick={addRow}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          + Regel toevoegen
-        </button>
       </div>
 
       {feedback && (
@@ -185,7 +184,7 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
         disabled={submitting}
         className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
       >
-        {submitting ? 'Bezig...' : 'Bulk uitboeken'}
+        {submitting ? 'Bezig...' : 'Voorraad uitboeken'}
       </button>
     </form>
   );

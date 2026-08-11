@@ -4,10 +4,8 @@ import { useInventory } from './useInventory';
 import { useTheme } from './useTheme';
 import { LoginPage } from './components/LoginPage';
 import { SearchView } from './components/SearchView';
-import { StockForm } from './components/StockForm';
-import { BulkIntakeForm } from './components/BulkIntakeForm';
-import { StockOutForm } from './components/StockOutForm';
-import { BulkOutakeForm } from './components/BulkOutakeForm';
+import { IntakeForm } from './components/IntakeForm';
+import { OutakeForm } from './components/OutakeForm';
 import { WarehouseView } from './components/WarehouseView';
 import { HistoryView } from './components/HistoryView';
 import { ProductsAdmin } from './components/ProductsAdmin';
@@ -16,36 +14,6 @@ import { AccountsAdmin } from './components/AccountsAdmin';
 import type { Profile } from './types';
 
 type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'history' | 'accounts';
-type Mode = 'single' | 'bulk';
-
-function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => void }) {
-  return (
-    <div className="mb-6 flex gap-2">
-      <button
-        type="button"
-        onClick={() => onChange('single')}
-        className={`rounded-lg px-4 py-2 text-sm font-medium ${
-          mode === 'single'
-            ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-        }`}
-      >
-        Eén artikel
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('bulk')}
-        className={`rounded-lg px-4 py-2 text-sm font-medium ${
-          mode === 'bulk'
-            ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-        }`}
-      >
-        Bulk (meerdere artikelen)
-      </button>
-    </div>
-  );
-}
 
 function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
   return (
@@ -90,8 +58,6 @@ function AuthenticatedApp({
 }) {
   const isAdmin = profile.role === 'admin';
   const [tab, setTab] = useState<Tab>('overview');
-  const [intakeMode, setIntakeMode] = useState<Mode>('single');
-  const [outtakeMode, setOuttakeMode] = useState<Mode>('single');
   const {
     companies,
     warehouses,
@@ -173,37 +139,10 @@ function AuthenticatedApp({
                 <SearchView products={products} stock={stock} companies={companies} warehouses={warehouses} />
               )}
               {tab === 'intake' && (
-                <>
-                  <ModeToggle mode={intakeMode} onChange={setIntakeMode} />
-                  {intakeMode === 'single' ? (
-                    <StockForm
-                      products={products}
-                      companies={companies}
-                      warehouses={warehouses}
-                      canCreateProduct={isAdmin}
-                      onAddProduct={addProduct}
-                      onAddStock={handleAddStock}
-                    />
-                  ) : (
-                    <BulkIntakeForm products={products} warehouses={warehouses} onAddStock={handleAddStock} />
-                  )}
-                </>
+                <IntakeForm products={products} warehouses={warehouses} onAddStock={handleAddStock} />
               )}
               {tab === 'outtake' && (
-                <>
-                  <ModeToggle mode={outtakeMode} onChange={setOuttakeMode} />
-                  {outtakeMode === 'single' ? (
-                    <StockOutForm
-                      products={products}
-                      stock={stock}
-                      companies={companies}
-                      warehouses={warehouses}
-                      onRemoveStock={removeStockQuantity}
-                    />
-                  ) : (
-                    <BulkOutakeForm products={products} stock={stock} warehouses={warehouses} onRemoveStock={removeStockQuantity} />
-                  )}
-                </>
+                <OutakeForm products={products} stock={stock} warehouses={warehouses} onRemoveStock={removeStockQuantity} />
               )}
               {tab === 'warehouses' && (
                 <WarehouseView
@@ -218,6 +157,7 @@ function AuthenticatedApp({
                 <ProductsAdmin
                   products={products}
                   companies={companies}
+                  onAddProduct={addProduct}
                   onUpdateProduct={updateProduct}
                   onDeleteProduct={deleteProduct}
                 />
