@@ -13,8 +13,10 @@ interface Props {
   products: Product[];
   stock: StockEntry[];
   warehouses: Warehouse[];
-  onRemoveStock: (entryId: string, quantity: number) => void;
+  onRemoveStock: (entryId: string, quantity: number) => Promise<string | null>;
 }
+
+type Feedback = { text: string; type: 'error' | 'success' };
 
 function newRow(): Row {
   return { key: Math.random().toString(36).slice(2), productId: '', entryId: '', boxes: '', looseUnits: '' };
@@ -22,7 +24,8 @@ function newRow(): Row {
 
 export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: Props) {
   const [rows, setRows] = useState<Row[]>([newRow(), newRow()]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   function updateRow(key: string, patch: Partial<Row>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -46,13 +49,13 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
     return (Number(row.boxes) || 0) * unitsPerBox + (Number(row.looseUnits) || 0);
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setMessage(null);
+    setFeedback(null);
 
     const activeRows = rows.filter((r) => r.productId && r.entryId && quantityFor(r) > 0);
     if (activeRows.length === 0) {
-      setMessage('Vul minstens één regel met artikel, batch en aantal in.');
+      setFeedback({ text: 'Vul minstens één regel met artikel, batch en aantal in.', type: 'error' });
       return;
     }
 
@@ -62,16 +65,26 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
       if (!entry) continue;
       if (requested > entry.quantity) {
         const product = products.find((p) => p.id === row.productId);
-        setMessage(`${product?.articleNumber ?? 'Een artikel'}: je probeert ${requested} stuks uit te boeken, maar er liggen maar ${entry.quantity}. Pas de regel aan en probeer opnieuw.`);
+        setFeedback({
+          text: `${product?.articleNumber ?? 'Een artikel'}: je probeert ${requested} stuks uit te boeken, maar er liggen maar ${entry.quantity}. Pas de regel aan en probeer opnieuw.`,
+          type: 'error',
+        });
         return;
       }
     }
 
+    setSubmitting(true);
     for (const row of activeRows) {
-      onRemoveStock(row.entryId, quantityFor(row));
+      const error = await onRemoveStock(row.entryId, quantityFor(row));
+      if (error) {
+        setSubmitting(false);
+        setFeedback({ text: error, type: 'error' });
+        return;
+      }
     }
+    setSubmitting(false);
 
-    setMessage(`${activeRows.length} regel(s) uitgeboekt.`);
+    setFeedback({ text: `${activeRows.length} regel(s) uitgeboekt.`, type: 'success' });
     setRows([newRow(), newRow()]);
   }
 
@@ -178,14 +191,18 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
         </button>
       </div>
 
-      {message && (
-        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.includes('maar er liggen') ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
-          {message}
+      {feedback && (
+        <p className={`rounded-md px-3 py-2 text-sm ${feedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
+          {feedback.text}
         </p>
       )}
 
-      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300">
-        Bulk uitboeken
+      <button
+        type="submit"
+        disabled={submitting}
+        className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+      >
+        {submitting ? 'Bezig...' : 'Bulk uitboeken'}
       </button>
     </form>
   );

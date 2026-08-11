@@ -8,12 +8,15 @@ interface Props {
   products: Product[];
   companies: Company[];
   warehouses: Warehouse[];
-  onAddProduct: (input: Omit<Product, 'id' | 'createdAt'>) => Product;
-  onAddStock: (productId: string, warehouseId: string, batchNumber: string, quantity: number) => void;
+  canCreateProduct: boolean;
+  onAddProduct: (input: Omit<Product, 'id' | 'createdAt'>) => Promise<{ product: Product | null; error: string | null }>;
+  onAddStock: (productId: string, warehouseId: string, batchNumber: string, quantity: number) => Promise<string | null>;
 }
 
-export function StockForm({ products, companies, warehouses, onAddProduct, onAddStock }: Props) {
-  const [mode, setMode] = useState<'new' | 'existing'>('new');
+type Feedback = { text: string; type: 'error' | 'success' };
+
+export function StockForm({ products, companies, warehouses, canCreateProduct, onAddProduct, onAddStock }: Props) {
+  const [mode, setMode] = useState<'new' | 'existing'>(canCreateProduct ? 'new' : 'existing');
 
   const [articleNumber, setArticleNumber] = useState('');
   const [description, setDescription] = useState('');
@@ -29,14 +32,17 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
   const [boxes, setBoxes] = useState('');
   const [looseUnits, setLooseUnits] = useState('');
 
-  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  const effectiveMode = canCreateProduct ? mode : 'existing';
 
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === selectedProductId) ?? null,
     [products, selectedProductId],
   );
 
-  const effectiveUnitsPerBox = mode === 'existing' ? (selectedProduct?.unitsPerBox ?? 1) : Number(unitsPerBox) || 0;
+  const effectiveUnitsPerBox = effectiveMode === 'existing' ? (selectedProduct?.unitsPerBox ?? 1) : Number(unitsPerBox) || 0;
   const boxesNum = Number(boxes) || 0;
   const looseNum = Number(looseUnits) || 0;
   const totalQuantity = boxesNum * effectiveUnitsPerBox + looseNum;
@@ -47,34 +53,42 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
     setLooseUnits('');
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setMessage(null);
+    setFeedback(null);
 
     if (!warehouseId) {
-      setMessage('Kies een magazijn.');
+      setFeedback({ text: 'Kies een magazijn.', type: 'error' });
       return;
     }
     if (totalQuantity <= 0) {
-      setMessage('Vul een aantal dozen en/of losse stuks in.');
+      setFeedback({ text: 'Vul een aantal dozen en/of losse stuks in.', type: 'error' });
       return;
     }
 
     let productId = selectedProductId;
     let label = '';
 
-    if (mode === 'new') {
+    setSubmitting(true);
+
+    if (effectiveMode === 'new') {
       if (!articleNumber.trim() || !description.trim() || !ean.trim() || !companyId) {
-        setMessage('Vul artikelnummer, omschrijving, EAN en bedrijf in.');
+        setFeedback({ text: 'Vul artikelnummer, omschrijving, EAN en bedrijf in.', type: 'error' });
+        setSubmitting(false);
         return;
       }
-      const product = onAddProduct({
+      const { product, error } = await onAddProduct({
         articleNumber: articleNumber.trim(),
         description: description.trim(),
         ean: ean.trim(),
         companyId,
         unitsPerBox: Number(unitsPerBox) || 1,
       });
+      if (error || !product) {
+        setFeedback({ text: error ?? 'Aanmaken van artikel is mislukt.', type: 'error' });
+        setSubmitting(false);
+        return;
+      }
       productId = product.id;
       label = product.articleNumber;
 
@@ -84,37 +98,50 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
       setUnitsPerBox('1');
     } else {
       if (!selectedProduct) {
-        setMessage('Selecteer een bestaand artikel.');
+        setFeedback({ text: 'Selecteer een bestaand artikel.', type: 'error' });
+        setSubmitting(false);
         return;
       }
       label = selectedProduct.articleNumber;
     }
 
-    onAddStock(productId, warehouseId, batchNumber, totalQuantity);
+    const stockError = await onAddStock(productId, warehouseId, batchNumber, totalQuantity);
+    setSubmitting(false);
+
+    if (stockError) {
+      setFeedback({ text: stockError, type: 'error' });
+      return;
+    }
+
     resetStockFields();
-    setMessage(`${totalQuantity} stuks van ${label} (batch ${batchNumber}) toegevoegd aan ${warehouses.find((w) => w.id === warehouseId)?.name}.`);
+    setFeedback({
+      text: `${totalQuantity} stuks van ${label} (batch ${batchNumber}) toegevoegd aan ${warehouses.find((w) => w.id === warehouseId)?.name}.`,
+      type: 'success',
+    });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setMode('new')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'new' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
-        >
-          Nieuw artikel
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('existing')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'existing' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
-        >
-          Bestaand artikel (nieuwe batch)
-        </button>
-      </div>
+      {canCreateProduct && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('new')}
+            className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'new' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+          >
+            Nieuw artikel
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('existing')}
+            className={`rounded-lg px-4 py-2 text-sm font-medium ${mode === 'existing' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+          >
+            Bestaand artikel (nieuwe batch)
+          </button>
+        </div>
+      )}
 
-      {mode === 'new' ? (
+      {effectiveMode === 'new' ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Artikelnummer">
             <input
@@ -235,14 +262,18 @@ export function StockForm({ products, companies, warehouses, onAddProduct, onAdd
         </div>
       </div>
 
-      {message && (
-        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Vul') || message.startsWith('Kies') || message.startsWith('Selecteer') ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
-          {message}
+      {feedback && (
+        <p className={`rounded-md px-3 py-2 text-sm ${feedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
+          {feedback.text}
         </p>
       )}
 
-      <button type="submit" className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300">
-        Voorraad inboeken
+      <button
+        type="submit"
+        disabled={submitting}
+        className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+      >
+        {submitting ? 'Bezig...' : 'Voorraad inboeken'}
       </button>
     </form>
   );

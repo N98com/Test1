@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { COMPANIES, WAREHOUSES } from './data/seed';
+import { useAuth } from './useAuth';
 import { useInventory } from './useInventory';
 import { useTheme } from './useTheme';
+import { LoginPage } from './components/LoginPage';
 import { SearchView } from './components/SearchView';
 import { StockForm } from './components/StockForm';
 import { BulkIntakeForm } from './components/BulkIntakeForm';
@@ -9,17 +10,12 @@ import { StockOutForm } from './components/StockOutForm';
 import { BulkOutakeForm } from './components/BulkOutakeForm';
 import { WarehouseView } from './components/WarehouseView';
 import { HistoryView } from './components/HistoryView';
+import { ProductsAdmin } from './components/ProductsAdmin';
+import { AccountsAdmin } from './components/AccountsAdmin';
+import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'history';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'history' | 'accounts';
 type Mode = 'single' | 'bulk';
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'overview', label: 'Overzicht & zoeken' },
-  { id: 'intake', label: 'Artikel toevoegen / inboeken' },
-  { id: 'outtake', label: 'Uitboeken' },
-  { id: 'warehouses', label: 'Magazijnen' },
-  { id: 'history', label: 'Historie' },
-];
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => void }) {
   return (
@@ -72,12 +68,58 @@ function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: (
   );
 }
 
-function App() {
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-950">
+      <p className="text-sm text-slate-500 dark:text-slate-400">Laden...</p>
+    </div>
+  );
+}
+
+function AuthenticatedApp({
+  profile,
+  onSignOut,
+  theme,
+  toggleTheme,
+}: {
+  profile: Profile;
+  onSignOut: () => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+}) {
+  const isAdmin = profile.role === 'admin';
   const [tab, setTab] = useState<Tab>('overview');
   const [intakeMode, setIntakeMode] = useState<Mode>('single');
   const [outtakeMode, setOuttakeMode] = useState<Mode>('single');
-  const { products, stock, movements, addProduct, addStock, deleteStock, removeStockQuantity } = useInventory();
-  const { theme, toggleTheme } = useTheme();
+  const {
+    companies,
+    warehouses,
+    products,
+    stock,
+    movements,
+    loading,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addStock,
+    deleteStock,
+    removeStockQuantity,
+  } = useInventory(isAdmin);
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'overview', label: 'Overzicht & zoeken' },
+    { id: 'intake', label: 'Artikel toevoegen / inboeken' },
+    { id: 'outtake', label: 'Uitboeken' },
+    { id: 'warehouses', label: 'Magazijnen' },
+    ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
+    ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
+    ...(isAdmin ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
+  ];
+
+  async function handleAddStock(productId: string, warehouseId: string, batchNumber: string, quantity: number) {
+    const { error } = await addStock({ productId, warehouseId, batchNumber, quantity });
+    return error;
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
@@ -87,10 +129,23 @@ function App() {
             <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">Voorraadbeheer — LISL &amp; EB</h1>
             <p className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">Voorraad over 4 magazijnen per artikelnummer en EAN</p>
           </div>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden text-right text-xs text-slate-500 sm:block dark:text-slate-400">
+              <p className="font-medium text-slate-700 dark:text-slate-300">{profile.email}</p>
+              <p>{isAdmin ? 'Admin' : 'Gebruiker'}</p>
+            </div>
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Uitloggen
+            </button>
+          </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -108,70 +163,83 @@ function App() {
 
       <main className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6">
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-          {tab === 'overview' && (
-            <SearchView products={products} stock={stock} companies={COMPANIES} warehouses={WAREHOUSES} />
-          )}
-          {tab === 'intake' && (
+          {loading ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Voorraadgegevens laden...</p>
+          ) : (
             <>
-              <ModeToggle mode={intakeMode} onChange={setIntakeMode} />
-              {intakeMode === 'single' ? (
-                <StockForm
-                  products={products}
-                  companies={COMPANIES}
-                  warehouses={WAREHOUSES}
-                  onAddProduct={addProduct}
-                  onAddStock={(productId, warehouseId, batchNumber, quantity) =>
-                    addStock({ productId, warehouseId, batchNumber, quantity })
-                  }
-                />
-              ) : (
-                <BulkIntakeForm
-                  products={products}
-                  warehouses={WAREHOUSES}
-                  onAddStock={(productId, warehouseId, batchNumber, quantity) =>
-                    addStock({ productId, warehouseId, batchNumber, quantity })
-                  }
-                />
+              {tab === 'overview' && (
+                <SearchView products={products} stock={stock} companies={companies} warehouses={warehouses} />
               )}
-            </>
-          )}
-          {tab === 'outtake' && (
-            <>
-              <ModeToggle mode={outtakeMode} onChange={setOuttakeMode} />
-              {outtakeMode === 'single' ? (
-                <StockOutForm
+              {tab === 'intake' && (
+                <>
+                  <ModeToggle mode={intakeMode} onChange={setIntakeMode} />
+                  {intakeMode === 'single' ? (
+                    <StockForm
+                      products={products}
+                      companies={companies}
+                      warehouses={warehouses}
+                      canCreateProduct={isAdmin}
+                      onAddProduct={addProduct}
+                      onAddStock={handleAddStock}
+                    />
+                  ) : (
+                    <BulkIntakeForm products={products} warehouses={warehouses} onAddStock={handleAddStock} />
+                  )}
+                </>
+              )}
+              {tab === 'outtake' && (
+                <>
+                  <ModeToggle mode={outtakeMode} onChange={setOuttakeMode} />
+                  {outtakeMode === 'single' ? (
+                    <StockOutForm
+                      products={products}
+                      stock={stock}
+                      companies={companies}
+                      warehouses={warehouses}
+                      onRemoveStock={removeStockQuantity}
+                    />
+                  ) : (
+                    <BulkOutakeForm products={products} stock={stock} warehouses={warehouses} onRemoveStock={removeStockQuantity} />
+                  )}
+                </>
+              )}
+              {tab === 'warehouses' && (
+                <WarehouseView
                   products={products}
                   stock={stock}
-                  companies={COMPANIES}
-                  warehouses={WAREHOUSES}
-                  onRemoveStock={removeStockQuantity}
-                />
-              ) : (
-                <BulkOutakeForm
-                  products={products}
-                  stock={stock}
-                  warehouses={WAREHOUSES}
-                  onRemoveStock={removeStockQuantity}
+                  companies={companies}
+                  warehouses={warehouses}
+                  onDeleteStock={deleteStock}
                 />
               )}
+              {tab === 'products' && isAdmin && (
+                <ProductsAdmin
+                  products={products}
+                  companies={companies}
+                  onUpdateProduct={updateProduct}
+                  onDeleteProduct={deleteProduct}
+                />
+              )}
+              {tab === 'history' && isAdmin && (
+                <HistoryView movements={movements} products={products} companies={companies} warehouses={warehouses} />
+              )}
+              {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
             </>
-          )}
-          {tab === 'warehouses' && (
-            <WarehouseView
-              products={products}
-              stock={stock}
-              companies={COMPANIES}
-              warehouses={WAREHOUSES}
-              onDeleteStock={deleteStock}
-            />
-          )}
-          {tab === 'history' && (
-            <HistoryView movements={movements} products={products} companies={COMPANIES} warehouses={WAREHOUSES} />
           )}
         </div>
       </main>
     </div>
   );
+}
+
+function App() {
+  const { user, profile, loading, error, signIn, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  if (loading) return <LoadingScreen />;
+  if (!user || !profile) return <LoginPage onSignIn={signIn} error={error} />;
+
+  return <AuthenticatedApp profile={profile} onSignOut={signOut} theme={theme} toggleTheme={toggleTheme} />;
 }
 
 export default App;

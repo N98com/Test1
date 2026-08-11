@@ -8,15 +8,18 @@ interface Props {
   stock: StockEntry[];
   companies: Company[];
   warehouses: Warehouse[];
-  onRemoveStock: (entryId: string, quantity: number) => void;
+  onRemoveStock: (entryId: string, quantity: number) => Promise<string | null>;
 }
+
+type Feedback = { text: string; type: 'error' | 'success' };
 
 export function StockOutForm({ products, stock, companies, warehouses, onRemoveStock }: Props) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedEntryId, setSelectedEntryId] = useState('');
   const [boxes, setBoxes] = useState('');
   const [looseUnits, setLooseUnits] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === selectedProductId) ?? null,
@@ -43,26 +46,37 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
     setLooseUnits('');
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setMessage(null);
+    setFeedback(null);
 
     if (!selectedEntry) {
-      setMessage('Selecteer eerst een artikel en een magazijn/batch-regel.');
+      setFeedback({ text: 'Selecteer eerst een artikel en een magazijn/batch-regel.', type: 'error' });
       return;
     }
     if (totalQuantity <= 0) {
-      setMessage('Vul een aantal dozen en/of losse stuks in.');
+      setFeedback({ text: 'Vul een aantal dozen en/of losse stuks in.', type: 'error' });
       return;
     }
     if (totalQuantity > selectedEntry.quantity) {
-      setMessage(`Er liggen maar ${selectedEntry.quantity} stuks in deze batch, je kunt niet meer uitboeken.`);
+      setFeedback({ text: `Er liggen maar ${selectedEntry.quantity} stuks in deze batch, je kunt niet meer uitboeken.`, type: 'error' });
       return;
     }
 
-    onRemoveStock(selectedEntry.id, totalQuantity);
+    setSubmitting(true);
+    const error = await onRemoveStock(selectedEntry.id, totalQuantity);
+    setSubmitting(false);
+
+    if (error) {
+      setFeedback({ text: error, type: 'error' });
+      return;
+    }
+
     const warehouseName = warehouses.find((w) => w.id === selectedEntry.warehouseId)?.name ?? '';
-    setMessage(`${totalQuantity} stuks van ${selectedProduct?.articleNumber} (batch ${selectedEntry.batchNumber}) uitgeboekt uit ${warehouseName}.`);
+    setFeedback({
+      text: `${totalQuantity} stuks van ${selectedProduct?.articleNumber} (batch ${selectedEntry.batchNumber}) uitgeboekt uit ${warehouseName}.`,
+      type: 'success',
+    });
     resetFields();
     setSelectedEntryId('');
   }
@@ -154,18 +168,18 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
         </div>
       )}
 
-      {message && (
-        <p className={`rounded-md px-3 py-2 text-sm ${message.startsWith('Selecteer') || message.startsWith('Vul') || message.startsWith('Er liggen') ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
-          {message}
+      {feedback && (
+        <p className={`rounded-md px-3 py-2 text-sm ${feedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>
+          {feedback.text}
         </p>
       )}
 
       <button
         type="submit"
-        disabled={!selectedEntry}
+        disabled={!selectedEntry || submitting}
         className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
       >
-        Voorraad uitboeken
+        {submitting ? 'Bezig...' : 'Voorraad uitboeken'}
       </button>
     </form>
   );

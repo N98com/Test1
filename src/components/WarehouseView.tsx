@@ -7,13 +7,23 @@ interface Props {
   stock: StockEntry[];
   companies: Company[];
   warehouses: Warehouse[];
-  onDeleteStock: (id: string) => void;
+  onDeleteStock: (id: string) => Promise<string | null>;
 }
 
 export function WarehouseView({ products, stock, companies, warehouses, onDeleteStock }: Props) {
   const [activeId, setActiveId] = useState(warehouses[0]?.id ?? '');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
+
+  async function handleDelete(id: string) {
+    setError(null);
+    setDeletingId(id);
+    const err = await onDeleteStock(id);
+    setDeletingId(null);
+    if (err) setError(err);
+  }
 
   const activeWarehouse = warehouses.find((w) => w.id === activeId);
   const entries = stock
@@ -49,6 +59,10 @@ export function WarehouseView({ products, stock, companies, warehouses, onDelete
         </div>
       )}
 
+      {error && (
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{error}</p>
+      )}
+
       {entries.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
           Geen voorraad geregistreerd in dit magazijn.
@@ -78,11 +92,12 @@ export function WarehouseView({ products, stock, companies, warehouses, onDelete
                   <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100">{entry.quantity}</td>
                   <td className="px-3 py-2 text-right">
                     <button
-                      onClick={() => onDeleteStock(entry.id)}
-                      className="text-xs font-medium text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                      onClick={() => handleDelete(entry.id)}
+                      disabled={deletingId === entry.id}
+                      className="text-xs font-medium text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
                       title="Verwijder deze batchregel"
                     >
-                      Verwijder
+                      {deletingId === entry.id ? '...' : 'Verwijder'}
                     </button>
                   </td>
                 </tr>

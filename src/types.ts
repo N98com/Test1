@@ -40,3 +40,12 @@ export interface Movement {
   quantity: number;
   createdAt: string;
 }
+
+export type Role = 'admin' | 'user';
+
+export interface Profile {
+  id: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+}
