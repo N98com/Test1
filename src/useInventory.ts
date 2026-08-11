@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import type { Company, Movement, MovementType, Product, StockEntry, Warehouse } from './types';
 
@@ -89,7 +89,14 @@ export function useInventory(canReadHistory: boolean) {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Guards against out-of-order responses: if several refetches overlap (e.g. a burst
+  // of realtime events), only the results of the most recently *started* refetch are
+  // applied, so a slow/stale response can't clobber the UI with older data.
+  const requestIdRef = useRef(0);
+
   const refetch = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
     const [companiesRes, warehousesRes, productsRes, stockRes] = await Promise.all([
       supabase.from('companies').select('*'),
       supabase.from('warehouses').select('*').order('number'),
@@ -97,14 +104,27 @@ export function useInventory(canReadHistory: boolean) {
       supabase.from('stock_entries').select('*'),
     ]);
 
-    if (companiesRes.data) setCompanies((companiesRes.data as CompanyRow[]).map(mapCompany));
-    if (warehousesRes.data) setWarehouses((warehousesRes.data as WarehouseRow[]).map(mapWarehouse));
-    if (productsRes.data) setProducts((productsRes.data as ProductRow[]).map(mapProduct));
-    if (stockRes.data) setStock((stockRes.data as StockEntryRow[]).map(mapStockEntry));
+    const movementsRes = canReadHistory
+      ? await supabase.from('movements').select('*').order('created_at', { ascending: false })
+      : null;
+
+    if (requestId !== requestIdRef.current) return; // a newer refetch has since started; drop this one
+
+    if (companiesRes.error) console.error('Kon bedrijven niet laden:', companiesRes.error.message);
+    else setCompanies((companiesRes.data as CompanyRow[]).map(mapCompany));
+
+    if (warehousesRes.error) console.error('Kon magazijnen niet laden:', warehousesRes.error.message);
+    else setWarehouses((warehousesRes.data as WarehouseRow[]).map(mapWarehouse));
+
+    if (productsRes.error) console.error('Kon producten niet laden:', productsRes.error.message);
+    else setProducts((productsRes.data as ProductRow[]).map(mapProduct));
+
+    if (stockRes.error) console.error('Kon voorraad niet laden:', stockRes.error.message);
+    else setStock((stockRes.data as StockEntryRow[]).map(mapStockEntry));
 
     if (canReadHistory) {
-      const movementsRes = await supabase.from('movements').select('*').order('created_at', { ascending: false });
-      if (movementsRes.data) setMovements((movementsRes.data as MovementRow[]).map(mapMovement));
+      if (movementsRes?.error) console.error('Kon historie niet laden:', movementsRes.error.message);
+      else if (movementsRes) setMovements((movementsRes.data as MovementRow[]).map(mapMovement));
     } else {
       setMovements([]);
     }
@@ -115,14 +135,24 @@ export function useInventory(canReadHistory: boolean) {
   useEffect(() => {
     refetch();
 
+    // Bursts of realtime events (e.g. a bulk import) each schedule a refetch; debounce
+    // them into a single refetch shortly after things settle instead of firing one
+    // overlapping request per event.
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    function scheduleRefetch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(refetch, 250);
+    }
+
     const channel = supabase
       .channel('inventory-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entries' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'movements' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, scheduleRefetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entries' }, scheduleRefetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'movements' }, scheduleRefetch)
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [refetch]);
