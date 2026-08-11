@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import type { Product, StockEntry, Warehouse } from '../types';
+import { ProductSearchInput } from './ProductSearchInput';
 
 interface Row {
   key: string;
   productId: string;
   entryId: string;
   boxes: string;
-  looseUnits: string;
 }
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 type Feedback = { text: string; type: 'error' | 'success' };
 
 function newRow(): Row {
-  return { key: Math.random().toString(36).slice(2), productId: '', entryId: '', boxes: '', looseUnits: '' };
+  return { key: Math.random().toString(36).slice(2), productId: '', entryId: '', boxes: '' };
 }
 
 export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: Props) {
@@ -46,7 +46,7 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
   function quantityFor(row: Row): number {
     const product = products.find((p) => p.id === row.productId);
     const unitsPerBox = product?.unitsPerBox ?? 0;
-    return (Number(row.boxes) || 0) * unitsPerBox + (Number(row.looseUnits) || 0);
+    return (Number(row.boxes) || 0) * unitsPerBox;
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -103,7 +103,6 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
                 <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Artikel</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Magazijn / batch</th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Dozen</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Los</th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Totaal</th>
                 <th className="px-3 py-2"></th>
               </tr>
@@ -114,17 +113,12 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
                 const selectedEntry = entries.find((e) => e.id === row.entryId);
                 return (
                   <tr key={row.key}>
-                    <td className="px-3 py-2">
-                      <select
-                        value={row.productId}
-                        onChange={(e) => updateRow(row.key, { productId: e.target.value, entryId: '' })}
-                        className="input"
-                      >
-                        <option value="">Kies artikel...</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>{p.articleNumber} — {p.description}</option>
-                        ))}
-                      </select>
+                    <td className="px-3 py-2 min-w-[220px]">
+                      <ProductSearchInput
+                        products={products}
+                        productId={row.productId}
+                        onSelect={(productId) => updateRow(row.key, { productId, entryId: '' })}
+                      />
                     </td>
                     <td className="px-3 py-2">
                       <select
@@ -147,17 +141,6 @@ export function BulkOutakeForm({ products, stock, warehouses, onRemoveStock }: P
                         min={0}
                         value={row.boxes}
                         onChange={(e) => updateRow(row.key, { boxes: e.target.value })}
-                        className="input text-right"
-                        placeholder="0"
-                        disabled={!row.entryId}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        value={row.looseUnits}
-                        onChange={(e) => updateRow(row.key, { looseUnits: e.target.value })}
                         className="input text-right"
                         placeholder="0"
                         disabled={!row.entryId}

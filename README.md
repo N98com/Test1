@@ -20,12 +20,12 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   de batches (bv. `JUL/26`) per magazijn zien.
 - **Artikel toevoegen / inboeken**: nieuwe artikelen aanmaken (alleen Admin) of een nieuwe
   batch inboeken bij een bestaand artikel. Bij het inboeken kies je altijd het magazijn en
-  het batchnummer (maand + jaar), en kun je het aantal invullen via volle dozen ×
-  stuks/doos plus eventuele losse stuks. Met "Bulk" boek je in één keer meerdere bestaande
-  artikelen tegelijk in.
+  het batchnummer (maand + jaar); het aantal is altijd volle dozen × stuks/doos — dit
+  systeem houdt alleen volle dozen bij, geen losse stuks. Met "Bulk" boek je in één keer
+  meerdere bestaande artikelen tegelijk in, elk met een zoekbalk om het artikel te vinden.
 - **Uitboeken**: voorraad afboeken uit een specifieke batch/magazijn, bijvoorbeeld wanneer
   een volle doos wordt aangebroken en ingepakt. Dit systeem houdt alleen volle dozen bij.
-  Met "Bulk" boek je meerdere artikelen tegelijk uit.
+  Met "Bulk" boek je meerdere artikelen tegelijk uit, ook hier via een zoekbalk per regel.
 - **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels, met optie
   om een foutieve regel te verwijderen.
 - **Producten** (Admin): bestaande artikelen bewerken of verwijderen.
@@ -33,7 +33,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   Zebra-labelprinter (150 × 100 mm, PostNL-formaat). Elke sticker toont artikelnummer,
   omschrijving en aantal per doos in één kader en de batch in een tweede kader; de
   lettergrootte per kader krimpt automatisch mee zodat de tekst altijd past.
-- **Historie** (Admin): logboek van alle in-, uit- en correctieboekingen.
+- **Historie** (Admin): logboek van alle in-, uit- en correctieboekingen, inclusief het
+  account dat de mutatie heeft uitgevoerd.
 - **Accounts** (Admin): nieuwe accounts uitnodigen via e-mail met een rol, plus een
   overzicht van alle accounts met een dropdown om de rol te wijzigen.
 
@@ -70,6 +71,17 @@ Zonder deze Edge Function werkt de rest van de app gewoon door — alleen het
 kun je een account ook handmatig aanmaken via Dashboard → Authentication → Users →
 "Invite user"; die krijgt automatisch rol "Gebruiker", aan te passen in het
 Accounts-scherm.
+
+### Bestaand project bijwerken: kolom voor "Door" in Historie
+
+Heb je `supabase/schema.sql` al eerder gedraaid (vóór de `movements`-tabel een
+`created_by`-kolom kreeg)? Draai dan eenmalig dit los in de SQL Editor — het volledige
+script opnieuw draaien geeft anders foutmeldingen over tabellen die al bestaan:
+
+```sql
+alter table public.movements
+  add column created_by uuid references public.profiles(id) default auth.uid();
+```
 
 ## Ontwikkelen
 

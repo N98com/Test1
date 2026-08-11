@@ -30,7 +30,6 @@ export function StockForm({ products, companies, warehouses, canCreateProduct, o
   const [month, setMonth] = useState<string>(currentMonthAbbrev());
   const [year, setYear] = useState<string>(currentYearShort());
   const [boxes, setBoxes] = useState('');
-  const [looseUnits, setLooseUnits] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -44,13 +43,11 @@ export function StockForm({ products, companies, warehouses, canCreateProduct, o
 
   const effectiveUnitsPerBox = effectiveMode === 'existing' ? (selectedProduct?.unitsPerBox ?? 1) : Number(unitsPerBox) || 0;
   const boxesNum = Number(boxes) || 0;
-  const looseNum = Number(looseUnits) || 0;
-  const totalQuantity = boxesNum * effectiveUnitsPerBox + looseNum;
+  const totalQuantity = boxesNum * effectiveUnitsPerBox;
   const batchNumber = formatBatch(month, year);
 
   function resetStockFields() {
     setBoxes('');
-    setLooseUnits('');
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -62,7 +59,7 @@ export function StockForm({ products, companies, warehouses, canCreateProduct, o
       return;
     }
     if (totalQuantity <= 0) {
-      setFeedback({ text: 'Vul een aantal dozen en/of losse stuks in.', type: 'error' });
+      setFeedback({ text: 'Vul een aantal volle dozen in.', type: 'error' });
       return;
     }
 
@@ -239,16 +236,6 @@ export function StockForm({ products, companies, warehouses, canCreateProduct, o
               min={0}
               value={boxes}
               onChange={(e) => setBoxes(e.target.value)}
-              className="input"
-              placeholder="0"
-            />
-          </Field>
-          <Field label="Losse stuks (buiten dozen)">
-            <input
-              type="number"
-              min={0}
-              value={looseUnits}
-              onChange={(e) => setLooseUnits(e.target.value)}
               className="input"
               placeholder="0"
             />

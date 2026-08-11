@@ -39,6 +39,7 @@ export interface Movement {
   batchNumber: string;
   quantity: number;
   createdAt: string;
+  createdByEmail: string | null;
 }
 
 export type Role = 'admin' | 'user';

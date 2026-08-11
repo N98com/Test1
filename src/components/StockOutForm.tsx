@@ -17,7 +17,6 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedEntryId, setSelectedEntryId] = useState('');
   const [boxes, setBoxes] = useState('');
-  const [looseUnits, setLooseUnits] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
@@ -38,12 +37,10 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
 
   const unitsPerBox = selectedProduct?.unitsPerBox ?? 1;
   const boxesNum = Number(boxes) || 0;
-  const looseNum = Number(looseUnits) || 0;
-  const totalQuantity = boxesNum * unitsPerBox + looseNum;
+  const totalQuantity = boxesNum * unitsPerBox;
 
   function resetFields() {
     setBoxes('');
-    setLooseUnits('');
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -55,7 +52,7 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
       return;
     }
     if (totalQuantity <= 0) {
-      setFeedback({ text: 'Vul een aantal dozen en/of losse stuks in.', type: 'error' });
+      setFeedback({ text: 'Vul een aantal aangebroken dozen in.', type: 'error' });
       return;
     }
     if (totalQuantity > selectedEntry.quantity) {
@@ -141,16 +138,6 @@ export function StockOutForm({ products, stock, companies, warehouses, onRemoveS
                 min={0}
                 value={boxes}
                 onChange={(e) => setBoxes(e.target.value)}
-                className="input"
-                placeholder="0"
-              />
-            </Field>
-            <Field label="Losse stuks">
-              <input
-                type="number"
-                min={0}
-                value={looseUnits}
-                onChange={(e) => setLooseUnits(e.target.value)}
                 className="input"
                 placeholder="0"
               />

@@ -41,6 +41,7 @@ interface MovementRow {
   batch_number: string;
   quantity: number;
   created_at: string;
+  profiles: { email: string } | null;
 }
 
 const mapCompany = (row: CompanyRow): Company => ({ id: row.id, name: row.name });
@@ -79,6 +80,7 @@ const mapMovement = (row: MovementRow): Movement => ({
   batchNumber: row.batch_number,
   quantity: row.quantity,
   createdAt: row.created_at,
+  createdByEmail: row.profiles?.email ?? null,
 });
 
 export function useInventory(canReadHistory: boolean) {
@@ -105,7 +107,7 @@ export function useInventory(canReadHistory: boolean) {
     ]);
 
     const movementsRes = canReadHistory
-      ? await supabase.from('movements').select('*').order('created_at', { ascending: false })
+      ? await supabase.from('movements').select('*, profiles(email)').order('created_at', { ascending: false })
       : null;
 
     if (requestId !== requestIdRef.current) return; // a newer refetch has since started; drop this one

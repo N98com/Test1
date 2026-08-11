@@ -2,12 +2,12 @@ import { useState, type FormEvent } from 'react';
 import type { Product, Warehouse } from '../types';
 import { Field } from './Field';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
+import { ProductSearchInput } from './ProductSearchInput';
 
 interface Row {
   key: string;
   productId: string;
   boxes: string;
-  looseUnits: string;
 }
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 type Feedback = { text: string; type: 'error' | 'success' };
 
 function newRow(): Row {
-  return { key: Math.random().toString(36).slice(2), productId: '', boxes: '', looseUnits: '' };
+  return { key: Math.random().toString(36).slice(2), productId: '', boxes: '' };
 }
 
 export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
@@ -47,7 +47,7 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
   function quantityFor(row: Row): number {
     const product = products.find((p) => p.id === row.productId);
     const unitsPerBox = product?.unitsPerBox ?? 0;
-    return (Number(row.boxes) || 0) * unitsPerBox + (Number(row.looseUnits) || 0);
+    return (Number(row.boxes) || 0) * unitsPerBox;
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -123,7 +123,6 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Artikel</th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Volle dozen</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Losse stuks</th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Totaal</th>
                 <th className="px-3 py-2"></th>
               </tr>
@@ -131,17 +130,12 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
             <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
               {rows.map((row) => (
                 <tr key={row.key}>
-                  <td className="px-3 py-2">
-                    <select
-                      value={row.productId}
-                      onChange={(e) => updateRow(row.key, { productId: e.target.value })}
-                      className="input"
-                    >
-                      <option value="">Kies artikel...</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>{p.articleNumber} — {p.description}</option>
-                      ))}
-                    </select>
+                  <td className="px-3 py-2 min-w-[220px]">
+                    <ProductSearchInput
+                      products={products}
+                      productId={row.productId}
+                      onSelect={(productId) => updateRow(row.key, { productId })}
+                    />
                   </td>
                   <td className="px-3 py-2">
                     <input
@@ -149,16 +143,6 @@ export function BulkIntakeForm({ products, warehouses, onAddStock }: Props) {
                       min={0}
                       value={row.boxes}
                       onChange={(e) => updateRow(row.key, { boxes: e.target.value })}
-                      className="input text-right"
-                      placeholder="0"
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={row.looseUnits}
-                      onChange={(e) => updateRow(row.key, { looseUnits: e.target.value })}
                       className="input text-right"
                       placeholder="0"
                     />

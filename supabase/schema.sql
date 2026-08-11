@@ -129,7 +129,8 @@ create table public.movements (
   warehouse_id text not null references public.warehouses(id),
   batch_number text not null,
   quantity int not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  created_by uuid references public.profiles(id) default auth.uid()
 );
 alter table public.movements enable row level security;
 create policy "movements select admin only"
