@@ -117,25 +117,27 @@ body {
   white-space: pre-wrap;
 }
 
+/* Rendered via a portal directly under <body>, outside #root, so it never
+   inherits layout height from the rest of the (hidden-but-still-flowing) app —
+   position:fixed print content repeats on every page the document's normal
+   flow spans, so keeping this area fully separate avoids that entirely. */
+.sticker-print-area {
+  display: none;
+}
+
 @media print {
   @page {
     size: 150mm 100mm;
     margin: 0;
   }
 
-  body * {
-    visibility: hidden;
-  }
-
-  .sticker-print-area,
-  .sticker-print-area * {
-    visibility: visible;
+  #root {
+    display: none;
   }
 
   .sticker-print-area {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 }

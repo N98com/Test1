@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
 import type { Product } from '../types';
 
@@ -71,7 +72,7 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
           Tip: zet in het printvenster de schaal op "Werkelijke grootte" / 100% (niet "Passend maken"), zodat de sticker exact 150 × 100&nbsp;mm blijft.
         </p>
 
-        <div className="sticker-print-area flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4">
           {items.map((item) => (
             <div key={item.key} className="sticker shadow-lg">
               <StickerMainBox
@@ -84,6 +85,22 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
           ))}
         </div>
       </div>
+
+      {createPortal(
+        <div className="sticker-print-area">
+          {items.map((item) => (
+            <div key={item.key} className="sticker">
+              <StickerMainBox
+                articleNumber={item.product.articleNumber}
+                description={item.product.description}
+                unitsPerBox={item.product.unitsPerBox}
+              />
+              <StickerBatchBox batchNumber={batchNumber} />
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
