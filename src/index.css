@@ -108,6 +108,13 @@ body {
   gap: 1mm;
 }
 
+/* Top-align instead of center: if content still slightly overflows after
+   shrinking, only the last line gets clipped instead of the article number
+   (the most important line) losing its top half. */
+.sticker-box-main .sticker-box-inner {
+  justify-content: flex-start;
+}
+
 .sticker-line {
   font-weight: 700;
   text-align: center;

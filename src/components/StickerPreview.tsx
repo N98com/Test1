@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
+import { abbreviateForSticker } from '../lib/stickerText';
 import type { Product } from '../types';
 
 export interface StickerItem {
@@ -14,12 +15,13 @@ interface Props {
 }
 
 function StickerMainBox({ articleNumber, description, unitsPerBox }: { articleNumber: string; description: string; unitsPerBox: number }) {
-  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([articleNumber, description, unitsPerBox]);
+  const shortDescription = abbreviateForSticker(description);
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([articleNumber, shortDescription, unitsPerBox]);
   return (
     <div className="sticker-box sticker-box-main">
       <div ref={containerRef} className="sticker-box-inner">
         <div className="sticker-line" style={{ fontSize: `${40 * scale}pt` }}>{articleNumber}</div>
-        <div className="sticker-line" style={{ fontSize: `${26 * scale}pt` }}>{description}</div>
+        <div className="sticker-line" style={{ fontSize: `${26 * scale}pt` }}>{shortDescription}</div>
         <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>({unitsPerBox} st)</div>
       </div>
     </div>
