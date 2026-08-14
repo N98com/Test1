@@ -18,7 +18,7 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 - **Overzicht & zoeken**: zoek artikelen op artikelnummer, EAN of omschrijving. Toont per
   artikel direct de voorraad per magazijn (M1–M4) en het totaal. Een rij openklappen laat
   de batches (bv. `JUL/26`) per magazijn zien.
-- **Artikel toevoegen / inboeken**: kies het magazijn en het batchnummer (maand + jaar)
+- **Inboeken**: kies het magazijn en het batchnummer (maand + jaar)
   voor de hele batch, en zoek daaronder per regel een bestaand artikel op (artikelnummer,
   EAN of omschrijving). Het aantal is altijd volle dozen × stuks/doos — dit systeem houdt
   alleen volle dozen bij, geen losse stuks. Zodra je bij de laatste regel het aantal dozen
@@ -32,8 +32,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   om een foutieve regel te verwijderen.
 - **Producten** (Admin): nieuwe artikelen aanmaken (artikelnummer, EAN, omschrijving,
   bedrijf, doosinhoud) via "+ Nieuw artikel toevoegen", en bestaande artikelen bewerken of
-  verwijderen. Voorraad voor een nieuw artikel boek je daarna in via "Artikel toevoegen /
-  inboeken". Een nieuw artikel kan ook via een productlink van ledinbouwspotsleds.nl of
+  verwijderen. Voorraad voor een nieuw artikel boek je daarna in via "Inboeken". Een
+  nieuw artikel kan ook via een productlink van ledinbouwspotsleds.nl of
   ecobright.nl aangemaakt worden: titel, artikelnummer en EAN worden automatisch
   overgenomen van de pagina en het bedrijf (LISL/EB) wordt automatisch bepaald op basis
   van het domein — de velden blijven daarna gewoon bewerkbaar voordat je opslaat. Het

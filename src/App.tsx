@@ -75,7 +75,7 @@ function AuthenticatedApp({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overzicht & zoeken' },
-    { id: 'intake', label: 'Artikel toevoegen / inboeken' },
+    { id: 'intake', label: 'Inboeken' },
     { id: 'outtake', label: 'Uitboeken' },
     { id: 'warehouses', label: 'Magazijnen' },
     ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
