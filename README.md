@@ -33,7 +33,11 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 - **Producten** (Admin): nieuwe artikelen aanmaken (artikelnummer, EAN, omschrijving,
   bedrijf, doosinhoud) via "+ Nieuw artikel toevoegen", en bestaande artikelen bewerken of
   verwijderen. Voorraad voor een nieuw artikel boek je daarna in via "Artikel toevoegen /
-  inboeken".
+  inboeken". Een nieuw artikel kan ook via een productlink van ledinbouwspotsleds.nl of
+  ecobright.nl aangemaakt worden: titel, artikelnummer en EAN worden automatisch
+  overgenomen van de pagina en het bedrijf (LISL/EB) wordt automatisch bepaald op basis
+  van het domein — de velden blijven daarna gewoon bewerkbaar voordat je opslaat. Het
+  aantal per volle doos staat standaard op 50, met de keuze uit 10/20/50/100/1000.
 - **Stickers** (Admin): artikelen selecteren (nieuwste eerst) en labels genereren voor een
   Zebra-labelprinter (150 × 100 mm, PostNL-formaat). Elke sticker toont artikelnummer,
   omschrijving en aantal per doos in één kader en de batch in een tweede kader; de
@@ -76,6 +80,17 @@ Zonder deze Edge Function werkt de rest van de app gewoon door — alleen het
 kun je een account ook handmatig aanmaken via Dashboard → Authentication → Users →
 "Invite user"; die krijgt automatisch rol "Gebruiker", aan te passen in het
 Accounts-scherm.
+
+6. Zet de Edge Function `fetch-product` live (nodig voor "Artikel toevoegen via link" in
+   het Producten-scherm):
+   - Dashboard → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"**
+   - Naam: `fetch-product`
+   - Plak de inhoud van `supabase/functions/fetch-product/index.ts` en klik **Deploy**
+   - Geen extra secrets nodig, zelfde als bij `create-account` hierboven.
+
+Zonder deze Edge Function werkt de rest van de app gewoon door — alleen het
+"Ophalen"-knopje bij "Artikel toevoegen via link" geeft dan een foutmelding; een nieuw
+artikel handmatig aanmaken blijft gewoon werken.
 
 ### Bestaand project bijwerken: kolom voor "Door" in Historie
 
