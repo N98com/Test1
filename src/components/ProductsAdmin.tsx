@@ -83,8 +83,13 @@ export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProdu
 
     if (data?.error) {
       setFeedback({ text: data.error, type: 'error' });
-    } else {
+    } else if (data?.description && data?.articleNumber && data?.ean) {
       setFeedback({ text: 'Gegevens overgenomen van de link. Controleer en pas eventueel aan.', type: 'success' });
+    } else {
+      setFeedback({
+        text: 'Onverwachte reactie van de server. Controleer of de Edge Function "fetch-product" correct is gedeployed (met de juiste code, niet het lege voorbeeld).',
+        type: 'error',
+      });
     }
   }
 
