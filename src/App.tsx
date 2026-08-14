@@ -77,7 +77,7 @@ function AuthenticatedApp({
     { id: 'overview', label: 'Overzicht & zoeken' },
     { id: 'intake', label: 'Inboeken' },
     { id: 'outtake', label: 'Uitboeken' },
-    { id: 'warehouses', label: 'Magazijnen' },
+    { id: 'warehouses', label: 'Voorraad' },
     ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
     ...(isAdmin ? [{ id: 'stickers' as Tab, label: 'Stickers' }] : []),
     ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),

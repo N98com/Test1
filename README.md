@@ -28,7 +28,7 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   (bijvoorbeeld wanneer een volle doos wordt aangebroken en ingepakt) en vul het aantal
   aangebroken dozen in — ook hier komt automatisch een nieuwe regel bij zodra je een regel
   compleet hebt ingevuld.
-- **Magazijnen**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels, met optie
+- **Voorraad**: per magazijn (1 t/m 4) een overzicht van alle voorraadregels, met optie
   om een foutieve regel te verwijderen.
 - **Producten** (Admin): nieuwe artikelen aanmaken (artikelnummer, EAN, omschrijving,
   bedrijf, doosinhoud) via "+ Nieuw artikel toevoegen", en bestaande artikelen bewerken of
