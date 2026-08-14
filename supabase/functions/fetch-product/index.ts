@@ -151,28 +151,12 @@ Deno.serve(async (req) => {
     const ean = extractEan(html);
 
     if (!description || !articleNumber || !ean) {
-      return json(
-        {
-          error: 'Niet alle gegevens konden op deze pagina gevonden worden. Vul de ontbrekende velden handmatig aan.',
-          description,
-          articleNumber,
-          ean,
-          companyId,
-          // Tijdelijke diagnose-info, te verwijderen zodra de extractie voor alle sites werkt.
-          debug: {
-            requestedUrl: parsed.toString(),
-            finalUrl: pageRes.url,
-            status: pageRes.status,
-            htmlLength: html.length,
-            hasPageTitleH1: /<h1[^>]*class="[^"]*page-title[^"]*"[^>]*>/i.test(html),
-            hasOgTitle: /<meta\s+property="og:title"/i.test(html),
-            hasSkuMicrodata: /itemprop="sku"/i.test(html),
-            hasJsonLdSku: /"sku"\s*:\s*"/i.test(html),
-            htmlSnippet: html.slice(0, 800),
-          },
-        },
-        200,
-      );
+      const looksBlocked = /human verification|checking your browser|attention required|anubis/i.test(html);
+      const error = looksBlocked
+        ? 'Deze website blokkeert automatische toegang (botbeveiliging). Vul de gegevens handmatig in.'
+        : 'Niet alle gegevens konden op deze pagina gevonden worden. Vul de ontbrekende velden handmatig aan.';
+
+      return json({ error, description, articleNumber, ean, companyId }, 200);
     }
 
     return json({ description, articleNumber, ean, companyId }, 200);
