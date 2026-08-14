@@ -158,6 +158,18 @@ Deno.serve(async (req) => {
           articleNumber,
           ean,
           companyId,
+          // Tijdelijke diagnose-info, te verwijderen zodra de extractie voor alle sites werkt.
+          debug: {
+            requestedUrl: parsed.toString(),
+            finalUrl: pageRes.url,
+            status: pageRes.status,
+            htmlLength: html.length,
+            hasPageTitleH1: /<h1[^>]*class="[^"]*page-title[^"]*"[^>]*>/i.test(html),
+            hasOgTitle: /<meta\s+property="og:title"/i.test(html),
+            hasSkuMicrodata: /itemprop="sku"/i.test(html),
+            hasJsonLdSku: /"sku"\s*:\s*"/i.test(html),
+            htmlSnippet: html.slice(0, 800),
+          },
         },
         200,
       );
