@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabaseClient';
 import type { Profile } from './types';
@@ -19,6 +19,7 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const knownUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +46,7 @@ export function useAuth() {
       if (cancelled) return;
       setUser(session?.user ?? null);
       if (session?.user) {
+        knownUserIdRef.current = session.user.id;
         loadProfile(session.user);
       } else {
         setLoading(false);
@@ -55,10 +57,20 @@ export function useAuth() {
       if (cancelled) return;
       setUser(session?.user ?? null);
       setError(null);
+
       if (session?.user) {
-        setLoading(true);
+        // Supabase fires this on every background token refresh too (e.g. when the
+        // browser tab regains focus), not just on sign-in. Only show the loading screen
+        // for a genuine sign-in transition, otherwise AuthenticatedApp unmounts and
+        // remounts on every tab switch, resetting the current tab and any in-progress work.
+        const isNewSignIn = knownUserIdRef.current !== session.user.id;
+        knownUserIdRef.current = session.user.id;
+        if (isNewSignIn) {
+          setLoading(true);
+        }
         loadProfile(session.user);
       } else {
+        knownUserIdRef.current = null;
         setProfile(null);
         setLoading(false);
       }
