@@ -15,6 +15,11 @@ import type { Profile } from './types';
 
 type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'history' | 'accounts';
 
+// Historie en Accounts zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
+// onderliggende schermen te verwijderen. Zet op true om ze weer te tonen.
+const SHOW_HISTORY_TAB = false;
+const SHOW_ACCOUNTS_TAB = false;
+
 function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
   return (
     <button
@@ -80,8 +85,8 @@ function AuthenticatedApp({
     { id: 'warehouses', label: 'Voorraad' },
     ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
     ...(isAdmin ? [{ id: 'stickers' as Tab, label: 'Stickers' }] : []),
-    ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
-    ...(isAdmin ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
+    ...(isAdmin && SHOW_HISTORY_TAB ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
+    ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
 
   async function handleAddStock(productId: string, warehouseId: string, batchNumber: string, quantity: number) {
