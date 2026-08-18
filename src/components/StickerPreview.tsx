@@ -47,12 +47,9 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   return (
     <div className="sticker-box sticker-box-batch">
       <div className="sticker-box-batch-row">
-        <div className="sticker-box-batch-spacer" />
-        <div ref={containerRef} className="sticker-box-batch-text">
-          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
-        </div>
+        <div className="sticker-line sticker-box-batch-number" style={{ fontSize: '28pt' }}>{batchNumber}</div>
         <div className="sticker-box-batch-barcode">
-          <BarcodeSvg ean={ean} width={1.3} height={34} fontSize={12} margin={0} />
+          <BarcodeSvg ean={ean} width={1} height={26} fontSize={9} margin={0} />
         </div>
       </div>
     </div>

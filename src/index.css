@@ -115,33 +115,27 @@ body {
   justify-content: flex-start;
 }
 
-/* Batch box met barcode: 3 kolommen (lege spacer / batch / barcode) met gelijke
-   flankerende breedte, zodat de batchtekst gecentreerd blijft ongeacht de
-   breedte van de barcode ernaast. */
+/* Batch box met barcode: batch links op vaste (niet-krimpende) tekstgrootte,
+   barcode rechts ernaast. Geen shrink-to-fit hier, zodat het batchlettertype
+   nooit kleiner wordt dan normaal. */
 .sticker-box-batch-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 3mm;
   width: 100%;
   height: 100%;
 }
 
-.sticker-box-batch-text {
-  min-width: 0;
-  overflow: hidden;
+.sticker-box-batch-number {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .sticker-box-batch-barcode {
   display: flex;
   min-width: 0;
-  max-width: 100%;
-  justify-content: flex-end;
   align-items: center;
-}
-
-.sticker-box-batch-barcode svg {
-  max-width: 100%;
-  height: auto;
 }
 
 .sticker-line {
