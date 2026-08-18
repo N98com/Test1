@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
 import { abbreviateForSticker } from '../lib/stickerText';
+import { BarcodeSvg } from './BarcodeSvg';
 import type { Product } from '../types';
 
 export interface StickerItem {
@@ -12,6 +13,7 @@ export interface StickerItem {
 interface Props {
   items: StickerItem[];
   batchNumber: string;
+  includeBarcode: boolean;
   onClose: () => void;
 }
 
@@ -29,18 +31,35 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
   );
 }
 
-function StickerBatchBox({ batchNumber }: { batchNumber: string }) {
+function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: string; ean: string; includeBarcode: boolean }) {
   const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([batchNumber]);
+
+  if (!includeBarcode) {
+    return (
+      <div className="sticker-box sticker-box-batch">
+        <div ref={containerRef} className="sticker-box-inner">
+          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sticker-box sticker-box-batch">
-      <div ref={containerRef} className="sticker-box-inner">
-        <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
+      <div className="sticker-box-batch-row">
+        <div className="sticker-box-batch-spacer" />
+        <div ref={containerRef} className="sticker-box-batch-text">
+          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
+        </div>
+        <div className="sticker-box-batch-barcode">
+          <BarcodeSvg ean={ean} width={1.3} height={34} fontSize={12} margin={0} />
+        </div>
       </div>
     </div>
   );
 }
 
-export function StickerPreview({ items, batchNumber, onClose }: Props) {
+export function StickerPreview({ items, batchNumber, includeBarcode, onClose }: Props) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -92,7 +111,7 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
                 unitsPerBox={item.product.unitsPerBox}
                 companyId={item.product.companyId}
               />
-              <StickerBatchBox batchNumber={batchNumber} />
+              <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
             </div>
           ))}
         </div>
@@ -108,7 +127,7 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
                 unitsPerBox={item.product.unitsPerBox}
                 companyId={item.product.companyId}
               />
-              <StickerBatchBox batchNumber={batchNumber} />
+              <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
             </div>
           ))}
         </div>,

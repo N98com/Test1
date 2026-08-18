@@ -15,6 +15,7 @@ export function Stickers({ products, companies }: Props) {
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
+  const [includeBarcode, setIncludeBarcode] = useState(false);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
 
   const batchNumber = formatBatch(month, year);
@@ -104,6 +105,16 @@ export function Stickers({ products, companies }: Props) {
             <input value={batchNumber} disabled className="input" />
           </Field>
         </div>
+
+        <label className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={includeBarcode}
+            onChange={(e) => setIncludeBarcode(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Barcode toevoegen op de sticker (naast de batch)
+        </label>
       </div>
 
       <input
@@ -168,7 +179,12 @@ export function Stickers({ products, companies }: Props) {
       )}
 
       {previewItems && (
-        <StickerPreview items={previewItems} batchNumber={batchNumber} onClose={() => setPreviewItems(null)} />
+        <StickerPreview
+          items={previewItems}
+          batchNumber={batchNumber}
+          includeBarcode={includeBarcode}
+          onClose={() => setPreviewItems(null)}
+        />
       )}
     </div>
   );
