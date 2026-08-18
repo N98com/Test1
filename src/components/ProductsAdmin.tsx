@@ -54,17 +54,20 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
   const [fetchingUrl, setFetchingUrl] = useState(false);
 
   const [query, setQuery] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('all');
 
   const sorted = [...products].sort((a, b) => a.articleNumber.localeCompare(b.articleNumber));
 
   const normalizedQuery = query.trim().toLowerCase();
-  const filtered = normalizedQuery
-    ? sorted.filter((product) =>
+  const filtered = sorted
+    .filter((product) => companyFilter === 'all' || product.companyId === companyFilter)
+    .filter(
+      (product) =>
+        !normalizedQuery ||
         product.articleNumber.toLowerCase().includes(normalizedQuery) ||
         product.description.toLowerCase().includes(normalizedQuery) ||
         product.ean.toLowerCase().includes(normalizedQuery),
-      )
-    : sorted;
+    );
 
   function resetNewForm() {
     setNewArticleNumber('');
@@ -286,13 +289,25 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{error}</p>
       )}
 
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="input"
-        placeholder="Zoek op artikelnummer, omschrijving of EAN..."
-        type="search"
-      />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="input"
+          placeholder="Zoek op artikelnummer, omschrijving of EAN..."
+          type="search"
+        />
+        <select
+          value={companyFilter}
+          onChange={(e) => setCompanyFilter(e.target.value)}
+          className="input sm:w-48"
+        >
+          <option value="all">Alle bedrijven</option>
+          {companies.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         <table className="w-full min-w-[720px] divide-y divide-slate-200 text-sm dark:divide-slate-800">

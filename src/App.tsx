@@ -104,7 +104,7 @@ function AuthenticatedApp({
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-6xl items-start justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">Productbeheer — LISL &amp; EB</h1>
+            <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">Productbeheer</h1>
             <p className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">Artikelen bijhouden en stickers genereren</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
