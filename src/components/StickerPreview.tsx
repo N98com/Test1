@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
 import { abbreviateForSticker } from '../lib/stickerText';
@@ -40,6 +41,14 @@ function StickerBatchBox({ batchNumber }: { batchNumber: string }) {
 }
 
 export function StickerPreview({ items, batchNumber, onClose }: Props) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4">
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
