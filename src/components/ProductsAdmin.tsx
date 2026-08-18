@@ -9,6 +9,7 @@ const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 1000];
 interface Props {
   products: Product[];
   companies: Company[];
+  isAdmin: boolean;
   onAddProduct: (input: Omit<Product, 'id' | 'createdAt'>) => Promise<{ product: Product | null; error: string | null }>;
   onUpdateProduct: (id: string, patch: Partial<Omit<Product, 'id' | 'createdAt'>>) => Promise<string | null>;
   onDeleteProduct: (id: string) => Promise<string | null>;
@@ -34,7 +35,7 @@ function draftFor(product: Product): Draft {
   };
 }
 
-export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProduct, onDeleteProduct }: Props) {
+export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUpdateProduct, onDeleteProduct }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -179,21 +180,25 @@ export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProdu
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Bewerk artikelnummer, EAN, omschrijving, bedrijf of doosinhoud van een bestaand product.
+          {isAdmin
+            ? 'Bewerk artikelnummer, EAN, omschrijving, bedrijf of doosinhoud van een bestaand product.'
+            : 'Overzicht van alle artikelen.'}
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            setShowNewForm((v) => !v);
-            setFeedback(null);
-          }}
-          className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
-        >
-          {showNewForm ? 'Annuleren' : '+ Nieuw artikel toevoegen'}
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowNewForm((v) => !v);
+              setFeedback(null);
+            }}
+            className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+          >
+            {showNewForm ? 'Annuleren' : '+ Nieuw artikel toevoegen'}
+          </button>
+        )}
       </div>
 
-      {showNewForm && (
+      {isAdmin && showNewForm && (
         <form onSubmit={handleCreate} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
           <div className="space-y-2 rounded-lg border border-dashed border-slate-300 p-3 dark:border-slate-600">
             <Field label="Artikel toevoegen via link (ledinbouwspotsleds.nl of ecobright.nl)">
@@ -298,7 +303,7 @@ export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProdu
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">EAN</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Bedrijf</th>
               <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Stuks/doos</th>
-              <th className="px-3 py-2"></th>
+              {isAdmin && <th className="px-3 py-2"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
@@ -379,22 +384,24 @@ export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProdu
                     <CompanyBadge companyId={product.companyId} name={companies.find((c) => c.id === product.companyId)?.name ?? '—'} />
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{product.unitsPerBox}</td>
-                  <td className="px-3 py-2 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(product)}
-                      className="mr-3 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-                    >
-                      Bewerken
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(product.id)}
-                      className="text-xs font-medium text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      Verwijderen
-                    </button>
-                  </td>
+                  {isAdmin && (
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(product)}
+                        className="mr-3 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                      >
+                        Bewerken
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(product.id)}
+                        className="text-xs font-medium text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        Verwijderen
+                      </button>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -405,7 +412,9 @@ export function ProductsAdmin({ products, companies, onAddProduct, onUpdateProdu
       {filtered.length === 0 && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
           {sorted.length === 0
-            ? 'Nog geen artikelen. Klik op "+ Nieuw artikel toevoegen" om er een aan te maken.'
+            ? isAdmin
+              ? 'Nog geen artikelen. Klik op "+ Nieuw artikel toevoegen" om er een aan te maken.'
+              : 'Nog geen artikelen.'
             : 'Geen artikelen gevonden voor deze zoekopdracht.'}
         </p>
       )}

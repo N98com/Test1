@@ -15,8 +15,13 @@ import type { Profile } from './types';
 
 type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'history' | 'accounts';
 
-// Historie en Accounts zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
+// De tool wordt nu alleen gebruikt voor productbeheer en stickers, niet meer voor
+// voorraadbeheer. Deze tabs zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
 // onderliggende schermen te verwijderen. Zet op true om ze weer te tonen.
+const SHOW_OVERVIEW_TAB = false;
+const SHOW_INTAKE_TAB = false;
+const SHOW_OUTTAKE_TAB = false;
+const SHOW_WAREHOUSES_TAB = false;
 const SHOW_HISTORY_TAB = false;
 const SHOW_ACCOUNTS_TAB = false;
 
@@ -62,7 +67,7 @@ function AuthenticatedApp({
   toggleTheme: () => void;
 }) {
   const isAdmin = profile.role === 'admin';
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('products');
   const {
     companies,
     warehouses,
@@ -79,12 +84,12 @@ function AuthenticatedApp({
   } = useInventory(isAdmin);
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'overview', label: 'Overzicht & zoeken' },
-    { id: 'intake', label: 'Inboeken' },
-    { id: 'outtake', label: 'Uitboeken' },
-    { id: 'warehouses', label: 'Voorraad' },
-    ...(isAdmin ? [{ id: 'products' as Tab, label: 'Producten' }] : []),
-    ...(isAdmin ? [{ id: 'stickers' as Tab, label: 'Stickers' }] : []),
+    ...(SHOW_OVERVIEW_TAB ? [{ id: 'overview' as Tab, label: 'Overzicht & zoeken' }] : []),
+    ...(SHOW_INTAKE_TAB ? [{ id: 'intake' as Tab, label: 'Inboeken' }] : []),
+    ...(SHOW_OUTTAKE_TAB ? [{ id: 'outtake' as Tab, label: 'Uitboeken' }] : []),
+    ...(SHOW_WAREHOUSES_TAB ? [{ id: 'warehouses' as Tab, label: 'Voorraad' }] : []),
+    { id: 'products', label: 'Producten' },
+    { id: 'stickers', label: 'Stickers' },
     ...(isAdmin && SHOW_HISTORY_TAB ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
@@ -99,8 +104,8 @@ function AuthenticatedApp({
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-6xl items-start justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">Voorraadbeheer — LISL &amp; EB</h1>
-            <p className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">Voorraad over 4 magazijnen per artikelnummer en EAN</p>
+            <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">Productbeheer — LISL &amp; EB</h1>
+            <p className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">Artikelen bijhouden en stickers genereren</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="hidden text-right text-xs text-slate-500 sm:block dark:text-slate-400">
@@ -158,16 +163,17 @@ function AuthenticatedApp({
                   onDeleteStock={deleteStock}
                 />
               )}
-              {tab === 'products' && isAdmin && (
+              {tab === 'products' && (
                 <ProductsAdmin
                   products={products}
                   companies={companies}
+                  isAdmin={isAdmin}
                   onAddProduct={addProduct}
                   onUpdateProduct={updateProduct}
                   onDeleteProduct={deleteProduct}
                 />
               )}
-              {tab === 'stickers' && isAdmin && <Stickers products={products} companies={companies} />}
+              {tab === 'stickers' && <Stickers products={products} companies={companies} />}
               {tab === 'history' && isAdmin && (
                 <HistoryView movements={movements} products={products} companies={companies} warehouses={warehouses} />
               )}
