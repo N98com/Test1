@@ -10,10 +10,11 @@ import { WarehouseView } from './components/WarehouseView';
 import { HistoryView } from './components/HistoryView';
 import { ProductsAdmin } from './components/ProductsAdmin';
 import { Stickers } from './components/Stickers';
+import { Barcodes } from './components/Barcodes';
 import { AccountsAdmin } from './components/AccountsAdmin';
 import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'history' | 'accounts';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'barcodes' | 'history' | 'accounts';
 
 // De tool wordt nu alleen gebruikt voor productbeheer en stickers, niet meer voor
 // voorraadbeheer. Deze tabs zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
@@ -90,6 +91,7 @@ function AuthenticatedApp({
     ...(SHOW_WAREHOUSES_TAB ? [{ id: 'warehouses' as Tab, label: 'Voorraad' }] : []),
     { id: 'products', label: 'Producten' },
     { id: 'stickers', label: 'Stickers' },
+    { id: 'barcodes', label: 'Barcode generator' },
     ...(isAdmin && SHOW_HISTORY_TAB ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
@@ -174,6 +176,7 @@ function AuthenticatedApp({
                 />
               )}
               {tab === 'stickers' && <Stickers products={products} companies={companies} />}
+              {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
               {tab === 'history' && isAdmin && (
                 <HistoryView movements={movements} products={products} companies={companies} warehouses={warehouses} />
               )}
