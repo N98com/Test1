@@ -108,8 +108,8 @@ function AuthenticatedApp({
             <p className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">Artikelen bijhouden en stickers genereren</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <div className="hidden text-right text-xs text-slate-500 sm:block dark:text-slate-400">
-              <p className="font-medium text-slate-700 dark:text-slate-300">{profile.email}</p>
+            <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+              <p className="max-w-[9rem] truncate font-medium text-slate-700 sm:max-w-none dark:text-slate-300">{profile.email}</p>
               <p>{isAdmin ? 'Admin' : 'Gebruiker'}</p>
             </div>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
