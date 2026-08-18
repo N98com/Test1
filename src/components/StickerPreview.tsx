@@ -15,8 +15,8 @@ interface Props {
   onClose: () => void;
 }
 
-function StickerMainBox({ articleNumber, description, unitsPerBox }: { articleNumber: string; description: string; unitsPerBox: number }) {
-  const shortDescription = abbreviateForSticker(description);
+function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: { articleNumber: string; description: string; unitsPerBox: number; companyId: string }) {
+  const shortDescription = abbreviateForSticker(description, { articleNumber, companyId });
   const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([articleNumber, shortDescription, unitsPerBox]);
   return (
     <div className="sticker-box sticker-box-main">
@@ -90,6 +90,7 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
                 articleNumber={item.product.articleNumber}
                 description={item.product.description}
                 unitsPerBox={item.product.unitsPerBox}
+                companyId={item.product.companyId}
               />
               <StickerBatchBox batchNumber={batchNumber} />
             </div>
@@ -105,6 +106,7 @@ export function StickerPreview({ items, batchNumber, onClose }: Props) {
                 articleNumber={item.product.articleNumber}
                 description={item.product.description}
                 unitsPerBox={item.product.unitsPerBox}
+                companyId={item.product.companyId}
               />
               <StickerBatchBox batchNumber={batchNumber} />
             </div>
