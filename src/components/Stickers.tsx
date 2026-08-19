@@ -1,22 +1,26 @@
 import { useMemo, useState } from 'react';
-import type { Company, Product } from '../types';
+import type { Company, Product, StickerPrintItem } from '../types';
 import { Field } from './Field';
 import { CompanyBadge } from './CompanyBadge';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
 import { StickerPreview, type StickerItem } from './StickerPreview';
+import type { RecordPrintInput } from '../useStickerPrints';
 
 interface Props {
   products: Product[];
   companies: Company[];
+  onRecordPrint: (input: RecordPrintInput) => Promise<string | null>;
 }
 
-export function Stickers({ products, companies }: Props) {
+export function Stickers({ products, companies, onRecordPrint }: Props) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
   const [includeBarcode, setIncludeBarcode] = useState(false);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
+  const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
+  const [printError, setPrintError] = useState<string | null>(null);
 
   const batchNumber = formatBatch(month, year);
 
@@ -51,14 +55,30 @@ export function Stickers({ products, companies }: Props) {
 
   function handleGenerate() {
     const items: StickerItem[] = [];
+    const logItems: StickerPrintItem[] = [];
     for (const product of products) {
       const copies = selected[product.id];
       if (!copies) continue;
       for (let i = 0; i < copies; i += 1) {
         items.push({ key: `${product.id}-${i}`, product });
       }
+      logItems.push({
+        articleNumber: product.articleNumber,
+        description: product.description,
+        ean: product.ean,
+        companyId: product.companyId,
+        unitsPerBox: product.unitsPerBox,
+        copies,
+      });
     }
     setPreviewItems(items);
+    setPrintLogItems(logItems);
+    setPrintError(null);
+  }
+
+  async function handlePrint() {
+    const error = await onRecordPrint({ batchNumber, includeBarcode, items: printLogItems });
+    if (error) setPrintError(error);
   }
 
   return (
@@ -178,12 +198,19 @@ export function Stickers({ products, companies }: Props) {
         </p>
       )}
 
+      {printError && (
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">
+          Printen is gelukt, maar het loggen in Historie is mislukt: {printError}
+        </p>
+      )}
+
       {previewItems && (
         <StickerPreview
           items={previewItems}
           batchNumber={batchNumber}
           includeBarcode={includeBarcode}
           onClose={() => setPreviewItems(null)}
+          onPrint={handlePrint}
         />
       )}
     </div>

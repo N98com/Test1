@@ -42,6 +42,25 @@ export interface Movement {
   createdByEmail: string | null;
 }
 
+export interface StickerPrintItem {
+  articleNumber: string;
+  description: string;
+  ean: string;
+  companyId: string;
+  unitsPerBox: number;
+  copies: number;
+}
+
+export interface StickerPrint {
+  id: string;
+  printNumber: number;
+  batchNumber: string;
+  includeBarcode: boolean;
+  createdAt: string;
+  createdByEmail: string | null;
+  items: StickerPrintItem[];
+}
+
 export type Role = 'admin' | 'user';
 
 export interface Profile {

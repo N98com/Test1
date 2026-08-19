@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
 import { useInventory } from './useInventory';
+import { useStickerPrints } from './useStickerPrints';
 import { useTheme } from './useTheme';
 import { LoginPage } from './components/LoginPage';
 import { SearchView } from './components/SearchView';
 import { IntakeForm } from './components/IntakeForm';
 import { OutakeForm } from './components/OutakeForm';
 import { WarehouseView } from './components/WarehouseView';
-import { HistoryView } from './components/HistoryView';
+import { StickerHistoryView } from './components/StickerHistoryView';
 import { ProductsAdmin } from './components/ProductsAdmin';
 import { Stickers } from './components/Stickers';
 import { Barcodes } from './components/Barcodes';
@@ -23,7 +24,6 @@ const SHOW_OVERVIEW_TAB = false;
 const SHOW_INTAKE_TAB = false;
 const SHOW_OUTTAKE_TAB = false;
 const SHOW_WAREHOUSES_TAB = false;
-const SHOW_HISTORY_TAB = false;
 const SHOW_ACCOUNTS_TAB = false;
 
 function SettingsMenu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onToggleTheme: () => void }) {
@@ -117,7 +117,6 @@ function AuthenticatedApp({
     warehouses,
     products,
     stock,
-    movements,
     loading,
     addProduct,
     updateProduct,
@@ -126,6 +125,7 @@ function AuthenticatedApp({
     deleteStock,
     removeStockQuantity,
   } = useInventory(isAdmin);
+  const { prints: stickerPrints, loading: stickerPrintsLoading, recordPrint } = useStickerPrints(isAdmin);
 
   const tabs: { id: Tab; label: string }[] = [
     ...(SHOW_OVERVIEW_TAB ? [{ id: 'overview' as Tab, label: 'Overzicht & zoeken' }] : []),
@@ -135,7 +135,7 @@ function AuthenticatedApp({
     { id: 'products', label: 'Producten' },
     { id: 'stickers', label: 'Stickers' },
     { id: 'barcodes', label: 'Barcode generator' },
-    ...(isAdmin && SHOW_HISTORY_TAB ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
+    ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
 
@@ -218,10 +218,12 @@ function AuthenticatedApp({
                   onDeleteProduct={deleteProduct}
                 />
               )}
-              {tab === 'stickers' && <Stickers products={products} companies={companies} />}
+              {tab === 'stickers' && (
+                <Stickers products={products} companies={companies} onRecordPrint={recordPrint} />
+              )}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
               {tab === 'history' && isAdmin && (
-                <HistoryView movements={movements} products={products} companies={companies} warehouses={warehouses} />
+                <StickerHistoryView prints={stickerPrints} loading={stickerPrintsLoading} onRecordPrint={recordPrint} />
               )}
               {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
             </>

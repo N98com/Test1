@@ -15,6 +15,7 @@ interface Props {
   batchNumber: string;
   includeBarcode: boolean;
   onClose: () => void;
+  onPrint?: () => void;
 }
 
 function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: { articleNumber: string; description: string; unitsPerBox: number; companyId: string }) {
@@ -58,7 +59,7 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   );
 }
 
-export function StickerPreview({ items, batchNumber, includeBarcode, onClose }: Props) {
+export function StickerPreview({ items, batchNumber, includeBarcode, onClose, onPrint }: Props) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -89,7 +90,10 @@ export function StickerPreview({ items, batchNumber, includeBarcode, onClose }: 
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => {
+                onPrint?.();
+                window.print();
+              }}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
             >
               Printen
