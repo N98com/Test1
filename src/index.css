@@ -153,21 +153,16 @@ body {
   white-space: nowrap;
 }
 
-/* Rendered via a portal directly under <body>, outside #root, so it never
-   inherits layout height from the rest of the (hidden-but-still-flowing) app —
-   position:fixed print content repeats on every page the document's normal
-   flow spans, so keeping this area fully separate avoids that entirely.
-   Kept off-screen (not display:none) so its content still has real layout
-   dimensions at all times: the shrink-to-fit hook measures scrollWidth/
-   clientWidth via JS, which are always 0 on a display:none element, so a
-   display:none print copy would never actually shrink its text before print. */
+/* Rendered in its own dedicated popup tab (see openPrintWindow), so it's the
+   on-screen preview AND the print source at once — always visible, no
+   display:none/off-screen tricks needed (those would break shrink-to-fit,
+   which measures scrollWidth/clientWidth via JS and needs real layout). */
 .sticker-print-area {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6mm;
+  padding: 6mm 0 12mm;
 }
 
 /* Barcode labels: zelfde 150mm x 100mm Zebra-labelformaat als de stickers. */
@@ -225,13 +220,8 @@ body {
   }
 
   .sticker-print-area {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    gap: 0;
+    padding: 0;
   }
 
   .barcode-print-area {

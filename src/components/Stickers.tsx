@@ -5,6 +5,7 @@ import { CompanyBadge } from './CompanyBadge';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
 import { StickerPreview, type StickerItem } from './StickerPreview';
 import type { RecordPrintInput } from '../useStickerPrints';
+import { openPrintWindow } from '../lib/printWindow';
 
 interface Props {
   products: Product[];
@@ -19,6 +20,7 @@ export function Stickers({ products, companies, onRecordPrint }: Props) {
   const [year, setYear] = useState(currentYearShort());
   const [includeBarcode, setIncludeBarcode] = useState(false);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
+  const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
   const [printError, setPrintError] = useState<string | null>(null);
 
@@ -54,6 +56,13 @@ export function Stickers({ products, companies, onRecordPrint }: Props) {
   }
 
   function handleGenerate() {
+    // Moet synchroon in de click-handler gebeuren, anders blokkeren pop-upblokkers dit.
+    const popup = openPrintWindow('Stickers');
+    if (!popup) {
+      setPrintError('Kon geen nieuw tabblad openen. Sta pop-ups toe voor deze site en probeer opnieuw.');
+      return;
+    }
+
     const items: StickerItem[] = [];
     const logItems: StickerPrintItem[] = [];
     for (const product of products) {
@@ -72,13 +81,14 @@ export function Stickers({ products, companies, onRecordPrint }: Props) {
       });
     }
     setPreviewItems(items);
+    setPreviewWindow(popup);
     setPrintLogItems(logItems);
     setPrintError(null);
   }
 
   async function handlePrint() {
     const error = await onRecordPrint({ batchNumber, includeBarcode, items: printLogItems });
-    if (error) setPrintError(error);
+    if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
 
   return (
@@ -199,17 +209,19 @@ export function Stickers({ products, companies, onRecordPrint }: Props) {
       )}
 
       {printError && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">
-          Printen is gelukt, maar het loggen in Historie is mislukt: {printError}
-        </p>
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{printError}</p>
       )}
 
-      {previewItems && (
+      {previewItems && previewWindow && (
         <StickerPreview
           items={previewItems}
           batchNumber={batchNumber}
           includeBarcode={includeBarcode}
-          onClose={() => setPreviewItems(null)}
+          popup={previewWindow}
+          onClose={() => {
+            setPreviewItems(null);
+            setPreviewWindow(null);
+          }}
           onPrint={handlePrint}
         />
       )}

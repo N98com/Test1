@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { StickerPrint } from '../types';
 import { StickerPreview, type StickerItem } from './StickerPreview';
 import type { RecordPrintInput } from '../useStickerPrints';
+import { openPrintWindow } from '../lib/printWindow';
 
 interface Props {
   prints: StickerPrint[];
@@ -20,10 +21,17 @@ function formatDateTime(iso: string): string {
 }
 
 export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
-  const [reprint, setReprint] = useState<{ print: StickerPrint; items: StickerItem[] } | null>(null);
+  const [reprint, setReprint] = useState<{ print: StickerPrint; items: StickerItem[]; popup: Window } | null>(null);
   const [printError, setPrintError] = useState<string | null>(null);
 
   function startReprint(print: StickerPrint) {
+    // Moet synchroon in de click-handler gebeuren, anders blokkeren pop-upblokkers dit.
+    const popup = openPrintWindow('Stickers');
+    if (!popup) {
+      setPrintError('Kon geen nieuw tabblad openen. Sta pop-ups toe voor deze site en probeer opnieuw.');
+      return;
+    }
+
     const items: StickerItem[] = [];
     print.items.forEach((item, itemIndex) => {
       for (let i = 0; i < item.copies; i += 1) {
@@ -42,7 +50,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
       }
     });
     setPrintError(null);
-    setReprint({ print, items });
+    setReprint({ print, items, popup });
   }
 
   async function handlePrint() {
@@ -52,7 +60,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
       includeBarcode: reprint.print.includeBarcode,
       items: reprint.print.items,
     });
-    if (error) setPrintError(error);
+    if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
 
   if (loading) {
@@ -66,9 +74,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
       </p>
 
       {printError && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">
-          Printen is gelukt, maar het loggen in Historie is mislukt: {printError}
-        </p>
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{printError}</p>
       )}
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
@@ -130,6 +136,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
           items={reprint.items}
           batchNumber={reprint.print.batchNumber}
           includeBarcode={reprint.print.includeBarcode}
+          popup={reprint.popup}
           onClose={() => setReprint(null)}
           onPrint={handlePrint}
         />

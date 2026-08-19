@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
 import { stickerDescriptionLines } from '../lib/stickerText';
@@ -14,6 +14,7 @@ interface Props {
   items: StickerItem[];
   batchNumber: string;
   includeBarcode: boolean;
+  popup: Window;
   onClose: () => void;
   onPrint?: () => void;
 }
@@ -59,83 +60,94 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   );
 }
 
-export function StickerPreview({ items, batchNumber, includeBarcode, onClose, onPrint }: Props) {
+// Rendert in een los, al geopend browsertabblad (popup), niet als overlay op de
+// huidige pagina: window.print()/Escape/sluiten moeten dus op dát venster werken,
+// niet op het venster van de app zelf.
+export function StickerPreview({ items, batchNumber, includeBarcode, popup, onClose, onPrint }: Props) {
+  const [closed, setClosed] = useState(false);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        popup.close();
+        onClose();
+      }
     }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    popup.document.addEventListener('keydown', handleKeyDown);
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4">
-      <div className="mx-auto flex max-w-4xl flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-lg dark:bg-slate-900">
-          <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {items.length} sticker{items.length === 1 ? '' : 's'} klaar om te printen
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Batch: <span className="font-mono">{batchNumber}</span> · Formaat 150 × 100 mm
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Sluiten
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onPrint?.();
-                window.print();
-              }}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
-            >
-              Printen
-            </button>
-          </div>
+    // Gebruiker kan het tabblad ook gewoon zelf sluiten (kruisje) i.p.v. via de knop.
+    const pollClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(pollClosed);
+        setClosed(true);
+        onClose();
+      }
+    }, 500);
+
+    return () => {
+      popup.document.removeEventListener('keydown', handleKeyDown);
+      clearInterval(pollClosed);
+    };
+  }, [popup, onClose]);
+
+  if (closed || popup.closed) return null;
+
+  const root = popup.document.getElementById('popup-root');
+  if (!root) return null;
+
+  return createPortal(
+    <>
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white p-4 shadow-sm print:hidden">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {items.length} sticker{items.length === 1 ? '' : 's'} klaar om te printen
+          </p>
+          <p className="text-xs text-slate-500">
+            Batch: <span className="font-mono">{batchNumber}</span> · Formaat 150 × 100 mm
+          </p>
         </div>
-
-        <p className="text-xs text-slate-200">
-          Tip: zet in het printvenster de schaal op "Werkelijke grootte" / 100% (niet "Passend maken"), zodat de sticker exact 150 × 100&nbsp;mm blijft.
-        </p>
-
-        <div className="flex flex-col items-center gap-4">
-          {items.map((item) => (
-            <div key={item.key} className="sticker shadow-lg">
-              <StickerMainBox
-                articleNumber={item.product.articleNumber}
-                description={item.product.description}
-                unitsPerBox={item.product.unitsPerBox}
-                companyId={item.product.companyId}
-              />
-              <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
-            </div>
-          ))}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              popup.close();
+              onClose();
+            }}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Sluiten
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onPrint?.();
+              popup.print();
+            }}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Printen
+          </button>
         </div>
       </div>
 
-      {createPortal(
-        <div className="sticker-print-area">
-          {items.map((item) => (
-            <div key={item.key} className="sticker">
-              <StickerMainBox
-                articleNumber={item.product.articleNumber}
-                description={item.product.description}
-                unitsPerBox={item.product.unitsPerBox}
-                companyId={item.product.companyId}
-              />
-              <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
-            </div>
-          ))}
-        </div>,
-        document.body,
-      )}
-    </div>
+      <p className="px-4 py-2 text-xs text-slate-500 print:hidden">
+        Tip: zet in het printvenster de schaal op "Werkelijke grootte" / 100% (niet "Passend maken"), zodat de sticker exact 150 × 100&nbsp;mm blijft.
+      </p>
+
+      <div className="sticker-print-area">
+        {items.map((item) => (
+          <div key={item.key} className="sticker shadow-lg print:shadow-none">
+            <StickerMainBox
+              articleNumber={item.product.articleNumber}
+              description={item.product.description}
+              unitsPerBox={item.product.unitsPerBox}
+              companyId={item.product.companyId}
+            />
+            <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
+          </div>
+        ))}
+      </div>
+    </>,
+    root,
   );
 }

@@ -112,16 +112,34 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
     e.preventDefault();
     setFeedback(null);
 
-    if (!newArticleNumber.trim() || !newDescription.trim() || !newEan.trim() || !newCompanyId) {
+    const articleNumber = newArticleNumber.trim();
+    const ean = newEan.trim();
+
+    if (!articleNumber || !newDescription.trim() || !ean || !newCompanyId) {
       setFeedback({ text: 'Vul artikelnummer, omschrijving, EAN en bedrijf in.', type: 'error' });
+      return;
+    }
+
+    const duplicateArticle = products.some((p) => p.articleNumber.trim().toLowerCase() === articleNumber.toLowerCase());
+    const duplicateEan = products.some((p) => p.ean.trim().toLowerCase() === ean.toLowerCase());
+    if (duplicateArticle && duplicateEan) {
+      setFeedback({ text: `Artikelnummer "${articleNumber}" en EAN "${ean}" zijn beide al in gebruik.`, type: 'error' });
+      return;
+    }
+    if (duplicateArticle) {
+      setFeedback({ text: `Artikelnummer "${articleNumber}" is al in gebruik.`, type: 'error' });
+      return;
+    }
+    if (duplicateEan) {
+      setFeedback({ text: `EAN "${ean}" is al in gebruik.`, type: 'error' });
       return;
     }
 
     setCreating(true);
     const { product, error: createError } = await onAddProduct({
-      articleNumber: newArticleNumber.trim(),
+      articleNumber,
       description: newDescription.trim(),
-      ean: newEan.trim(),
+      ean,
       companyId: newCompanyId,
       unitsPerBox: Number(newUnitsPerBox) || 1,
     });
