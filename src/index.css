@@ -156,9 +156,18 @@ body {
 /* Rendered via a portal directly under <body>, outside #root, so it never
    inherits layout height from the rest of the (hidden-but-still-flowing) app —
    position:fixed print content repeats on every page the document's normal
-   flow spans, so keeping this area fully separate avoids that entirely. */
+   flow spans, so keeping this area fully separate avoids that entirely.
+   Kept off-screen (not display:none) so its content still has real layout
+   dimensions at all times: the shrink-to-fit hook measures scrollWidth/
+   clientWidth via JS, which are always 0 on a display:none element, so a
+   display:none print copy would never actually shrink its text before print. */
 .sticker-print-area {
-  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 /* Barcode labels: zelfde 150mm x 100mm Zebra-labelformaat als de stickers. */
@@ -194,8 +203,15 @@ body {
   justify-content: center;
 }
 
+/* Zelfde reden als .sticker-print-area hierboven: off-screen i.p.v.
+   display:none, zodat shrink-to-fit ook hier al vóór het printen kan meten. */
 .barcode-print-area {
-  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 @media print {
@@ -209,12 +225,20 @@ body {
   }
 
   .sticker-print-area {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
   .barcode-print-area {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     align-items: center;

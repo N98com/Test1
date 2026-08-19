@@ -31,7 +31,8 @@ export function stickerDescriptionLines(description: string, product?: { article
     .replace(/\s{2,}/g, ' ')
     .trim();
 
-  const kelvinMatch = withoutWattage.match(/\d+(?:[.,]\d+)?K\b/i);
+  // Ook kelvin-bereiken zoals "2200-6500K" in hun geheel meenemen, niet alleen het laatste getal.
+  const kelvinMatch = withoutWattage.match(/\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?K\b/i);
   if (!kelvinMatch || kelvinMatch.index === undefined) return [withoutWattage];
 
   const before = withoutWattage.slice(0, kelvinMatch.index).trim();
