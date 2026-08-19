@@ -8,9 +8,35 @@ export function abbreviateForSticker(description: string, product?: { articleNum
     .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '');
 
   // Wandlampen van LISL (artikelnummer begint met "WD"): "Up en/& Down" niet op de sticker.
-  if (product?.companyId === 'lisl' && product.articleNumber.trim().toUpperCase().startsWith('WD')) {
+  if (isWdArticle(product)) {
     result = result.replace(/\bup\s*(?:en|&|and)\s*down\b/gi, '');
   }
 
   return result.replace(/\s{2,}/g, ' ').trim();
+}
+
+function isWdArticle(product?: { articleNumber: string; companyId: string }): boolean {
+  return !!product && product.companyId === 'lisl' && product.articleNumber.trim().toUpperCase().startsWith('WD');
+}
+
+// Wandlampen (WD-): wattage staat al in het artikelnummer (bv. "WD-6W-..."), dus niet
+// herhalen in de omschrijving. De resterende tekst wordt in twee regels geknipt op de
+// kelvin-waarde, zodat "Led Wandlamp" en "3000K Zwart/Goud" los blijven i.p.v. één lange regel.
+export function stickerDescriptionLines(description: string, product?: { articleNumber: string; companyId: string }): string[] {
+  const abbreviated = abbreviateForSticker(description, product);
+  if (!isWdArticle(product)) return [abbreviated];
+
+  const withoutWattage = abbreviated
+    .replace(/\b\d+(?:[.,]\d+)?W\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  const kelvinMatch = withoutWattage.match(/\d+(?:[.,]\d+)?K\b/i);
+  if (!kelvinMatch || kelvinMatch.index === undefined) return [withoutWattage];
+
+  const before = withoutWattage.slice(0, kelvinMatch.index).trim();
+  const from = withoutWattage.slice(kelvinMatch.index).trim();
+  if (!before || !from) return [withoutWattage];
+
+  return [before, from];
 }

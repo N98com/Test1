@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
-import { abbreviateForSticker } from '../lib/stickerText';
+import { stickerDescriptionLines } from '../lib/stickerText';
 import { BarcodeSvg } from './BarcodeSvg';
 import type { Product } from '../types';
 
@@ -18,13 +18,15 @@ interface Props {
 }
 
 function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: { articleNumber: string; description: string; unitsPerBox: number; companyId: string }) {
-  const shortDescription = abbreviateForSticker(description, { articleNumber, companyId });
-  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([articleNumber, shortDescription, unitsPerBox]);
+  const descriptionLines = stickerDescriptionLines(description, { articleNumber, companyId });
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([articleNumber, ...descriptionLines, unitsPerBox]);
   return (
     <div className="sticker-box sticker-box-main">
       <div ref={containerRef} className="sticker-box-inner">
         <div className="sticker-line sticker-article-number" style={{ fontSize: `${40 * scale}pt` }}>{articleNumber}</div>
-        <div className="sticker-line" style={{ fontSize: `${26 * scale}pt` }}>{shortDescription}</div>
+        {descriptionLines.map((line, i) => (
+          <div key={i} className="sticker-line" style={{ fontSize: `${26 * scale}pt` }}>{line}</div>
+        ))}
         <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>({unitsPerBox} st)</div>
       </div>
     </div>
