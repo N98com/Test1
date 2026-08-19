@@ -147,6 +147,12 @@ body {
   white-space: pre-wrap;
 }
 
+/* Artikelnummer mag nooit naar een tweede regel wrappen: liever verder
+   verkleinen (via shrink-to-fit) dan afbreken. */
+.sticker-article-number {
+  white-space: nowrap;
+}
+
 /* Rendered via a portal directly under <body>, outside #root, so it never
    inherits layout height from the rest of the (hidden-but-still-flowing) app —
    position:fixed print content repeats on every page the document's normal

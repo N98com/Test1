@@ -23,7 +23,7 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
   return (
     <div className="sticker-box sticker-box-main">
       <div ref={containerRef} className="sticker-box-inner">
-        <div className="sticker-line" style={{ fontSize: `${40 * scale}pt` }}>{articleNumber}</div>
+        <div className="sticker-line sticker-article-number" style={{ fontSize: `${40 * scale}pt` }}>{articleNumber}</div>
         <div className="sticker-line" style={{ fontSize: `${26 * scale}pt` }}>{shortDescription}</div>
         <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>({unitsPerBox} st)</div>
       </div>
