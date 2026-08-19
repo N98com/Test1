@@ -69,10 +69,6 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        Overzicht van elke sticker-print: wie, wanneer, welke artikelen, aantallen, batch en met/zonder barcode.
-      </p>
-
       {printError && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">{printError}</p>
       )}
