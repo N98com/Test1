@@ -165,6 +165,36 @@ body {
   padding: 6mm 0 12mm;
 }
 
+/* Op scherm is een sticker (150mm ≈ 567px) vaak breder dan een telefoonscherm.
+   --sticker-scale wordt in JS gezet (zie StickerPreview) op de factor die 'm
+   precies in de viewport laat passen, zodat je 'm nooit horizontaal hoeft te
+   scrollen om de volledige sticker (incl. lange artikelnummers) te zien. Het
+   printresultaat gebruikt altijd de echte 150x100mm afmeting, ongeacht schaal. */
+@media screen {
+  .sticker-scale-outer {
+    width: 100%;
+    height: calc(100mm * var(--sticker-scale, 1));
+    display: flex;
+    justify-content: center;
+  }
+
+  .sticker-scale-outer .sticker {
+    transform: scale(var(--sticker-scale, 1));
+    transform-origin: top center;
+    flex-shrink: 0;
+  }
+}
+
+@media print {
+  .sticker-scale-outer {
+    height: auto;
+  }
+
+  .sticker-scale-outer .sticker {
+    transform: none;
+  }
+}
+
 /* Barcode labels: zelfde 150mm x 100mm Zebra-labelformaat als de stickers. */
 .barcode-label {
   width: 150mm;

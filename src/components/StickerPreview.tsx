@@ -60,6 +60,9 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   );
 }
 
+// 150mm omgerekend naar CSS-pixels (96dpi, de standaard mm->px-conversie van browsers).
+const STICKER_WIDTH_PX = 150 * (96 / 25.4);
+
 // Rendert in een los, al geopend browsertabblad (popup), niet als overlay op de
 // huidige pagina: window.print()/Escape/sluiten moeten dus op dát venster werken,
 // niet op het venster van de app zelf.
@@ -89,6 +92,25 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
       clearInterval(pollClosed);
     };
   }, [popup, onClose]);
+
+  useEffect(() => {
+    // Schaalt de op-scherm weergave (niet het printresultaat) zodat de volledige
+    // 150mm-brede sticker altijd in de viewport past, ook op een smal telefoonscherm.
+    function updateScale() {
+      const scale = Math.min(1, (popup.innerWidth - 32) / STICKER_WIDTH_PX);
+      popup.document.documentElement.style.setProperty('--sticker-scale', String(scale));
+    }
+    updateScale();
+    // Direct na het openen kan popup.innerWidth nog even afwijken van de uiteindelijke,
+    // gesettelde waarde (viewport-meta/layout die nog moet bijtrekken) — nog een keer
+    // meten na een frame vangt dat op.
+    const raf = popup.requestAnimationFrame(updateScale);
+    popup.addEventListener('resize', updateScale);
+    return () => {
+      popup.cancelAnimationFrame(raf);
+      popup.removeEventListener('resize', updateScale);
+    };
+  }, [popup]);
 
   if (closed || popup.closed) return null;
 
@@ -136,14 +158,16 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
 
       <div className="sticker-print-area">
         {items.map((item) => (
-          <div key={item.key} className="sticker shadow-lg print:shadow-none">
-            <StickerMainBox
-              articleNumber={item.product.articleNumber}
-              description={item.product.description}
-              unitsPerBox={item.product.unitsPerBox}
-              companyId={item.product.companyId}
-            />
-            <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
+          <div key={item.key} className="sticker-scale-outer">
+            <div className="sticker shadow-lg print:shadow-none">
+              <StickerMainBox
+                articleNumber={item.product.articleNumber}
+                description={item.product.description}
+                unitsPerBox={item.product.unitsPerBox}
+                companyId={item.product.companyId}
+              />
+              <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
+            </div>
           </div>
         ))}
       </div>
