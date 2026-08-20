@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import type { Company, Product } from '../types';
 import { CompanyBadge } from './CompanyBadge';
 import { Field } from './Field';
@@ -50,9 +49,6 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
   const [creating, setCreating] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const [productUrl, setProductUrl] = useState('');
-  const [fetchingUrl, setFetchingUrl] = useState(false);
-
   const [query, setQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
 
@@ -74,38 +70,6 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
     setNewDescription('');
     setNewEan('');
     setNewUnitsPerBox('50');
-    setProductUrl('');
-  }
-
-  async function handleFetchFromUrl() {
-    const url = productUrl.trim();
-    if (!url) return;
-
-    setFetchingUrl(true);
-    setFeedback(null);
-    const { data, error: invokeError } = await supabase.functions.invoke('fetch-product', { body: { url } });
-    setFetchingUrl(false);
-
-    if (invokeError) {
-      setFeedback({ text: `Ophalen via link is mislukt: ${invokeError.message}`, type: 'error' });
-      return;
-    }
-
-    if (data?.description) setNewDescription(data.description);
-    if (data?.articleNumber) setNewArticleNumber(data.articleNumber);
-    if (data?.ean) setNewEan(data.ean);
-    if (data?.companyId) setNewCompanyId(data.companyId);
-
-    if (data?.error) {
-      setFeedback({ text: data.error, type: 'error' });
-    } else if (data?.description && data?.articleNumber && data?.ean) {
-      setFeedback({ text: 'Gegevens overgenomen van de link. Controleer en pas eventueel aan.', type: 'success' });
-    } else {
-      setFeedback({
-        text: 'Onverwachte reactie van de server. Controleer of de Edge Function "fetch-product" correct is gedeployed (met de juiste code, niet het lege voorbeeld).',
-        type: 'error',
-      });
-    }
   }
 
   async function handleCreate(e: FormEvent) {
@@ -221,29 +185,6 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
 
       {isAdmin && showNewForm && (
         <form onSubmit={handleCreate} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-          <div className="space-y-2 rounded-lg border border-dashed border-slate-300 p-3 dark:border-slate-600">
-            <Field label="Artikel toevoegen via link (ledinbouwspotsleds.nl of ecobright.nl)">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  value={productUrl}
-                  onChange={(e) => setProductUrl(e.target.value)}
-                  className="input"
-                  placeholder="https://www.ledinbouwspotsleds.nl/..."
-                />
-                <button
-                  type="button"
-                  onClick={handleFetchFromUrl}
-                  disabled={fetchingUrl || !productUrl.trim()}
-                  className="shrink-0 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                >
-                  {fetchingUrl ? 'Ophalen...' : 'Ophalen'}
-                </button>
-              </div>
-            </Field>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Titel, artikelnummer en EAN worden automatisch overgenomen en het bedrijf wordt automatisch bepaald op basis van de link. Controleer de velden hieronder voordat je opslaat.
-            </p>
-          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Artikelnummer">
               <input

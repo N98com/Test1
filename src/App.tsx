@@ -8,14 +8,13 @@ import { SearchView } from './components/SearchView';
 import { IntakeForm } from './components/IntakeForm';
 import { OutakeForm } from './components/OutakeForm';
 import { WarehouseView } from './components/WarehouseView';
-import { StickerHistoryView } from './components/StickerHistoryView';
 import { ProductsAdmin } from './components/ProductsAdmin';
 import { Stickers } from './components/Stickers';
 import { Barcodes } from './components/Barcodes';
 import { AccountsAdmin } from './components/AccountsAdmin';
 import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'barcodes' | 'history' | 'accounts';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'barcodes' | 'accounts';
 
 // De tool wordt nu alleen gebruikt voor productbeheer en stickers, niet meer voor
 // voorraadbeheer. Deze tabs zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
@@ -135,7 +134,6 @@ function AuthenticatedApp({
     { id: 'products', label: 'Producten' },
     { id: 'stickers', label: 'Stickers' },
     { id: 'barcodes', label: 'Barcode generator' },
-    ...(isAdmin ? [{ id: 'history' as Tab, label: 'Historie' }] : []),
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
 
@@ -224,12 +222,16 @@ function AuthenticatedApp({
                 />
               )}
               {tab === 'stickers' && (
-                <Stickers products={products} companies={companies} onRecordPrint={recordPrint} />
+                <Stickers
+                  products={products}
+                  companies={companies}
+                  isAdmin={isAdmin}
+                  onRecordPrint={recordPrint}
+                  prints={stickerPrints}
+                  printsLoading={stickerPrintsLoading}
+                />
               )}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
-              {tab === 'history' && isAdmin && (
-                <StickerHistoryView prints={stickerPrints} loading={stickerPrintsLoading} onRecordPrint={recordPrint} />
-              )}
               {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
             </>
           )}
