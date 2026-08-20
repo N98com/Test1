@@ -165,6 +165,20 @@ Deno.serve(async (req) => {
         ? 'Deze website blokkeert automatische toegang (botbeveiliging). Vul de gegevens handmatig in.'
         : 'Niet alle gegevens konden op deze pagina gevonden worden. Vul de ontbrekende velden handmatig aan.';
 
+      // Tijdelijke diagnose: laat in de Supabase Function-logs zien wat er precies
+      // terugkwam, zodat we (zonder netwerktoegang vanuit de ontwikkelomgeving)
+      // kunnen achterhalen welk soort botbeveiliging dit is.
+      console.log('fetch-product diagnose:', {
+        url: parsed.toString(),
+        status: pageRes.status,
+        server: pageRes.headers.get('server'),
+        cfMitigated: pageRes.headers.get('cf-mitigated'),
+        cfRay: pageRes.headers.get('cf-ray'),
+        contentType: pageRes.headers.get('content-type'),
+        htmlLength: html.length,
+        htmlSnippet: html.slice(0, 1500),
+      });
+
       return json({ error, description, articleNumber, ean, companyId }, 200);
     }
 
