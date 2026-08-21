@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
+import { capitalizeWords, normalizeProvince } from '../lib/addressParse';
 
 export interface AddressLabelData {
   name: string;
@@ -19,25 +20,53 @@ interface Props {
   onPrint?: () => void;
 }
 
-function addressLines(data: AddressLabelData): string[] {
-  return [
-    data.name,
-    `${data.street} ${data.houseNumber}`.trim(),
-    `${data.postcode} ${data.city}`.trim(),
-    data.province,
-    data.country,
-  ]
-    .map((line) => line.trim())
-    .filter(Boolean);
+interface LabelLine {
+  text: string;
+  // Naam, straat+huisnummer en postcode+plaats moeten altijd op één regel
+  // passen (i.p.v. af te breken); provincie/land mogen wel wrappen.
+  oneLine: boolean;
 }
 
-function AddressLabelBox({ lines }: { lines: string[] }) {
-  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>(lines);
+// "1234AA, Plaatsnaam": zonder spatie in de postcode, in hoofdletters, gevolgd
+// door een komma en de plaatsnaam - los van hoe de postcode in het (bewerkbare)
+// formulierveld staat opgeslagen (daar blijft "1234 AA" i.v.m. leesbaarheid).
+function formatPostcodeCity(postcode: string, city: string): string {
+  const compactPostcode = postcode.replace(/\s+/g, '').toUpperCase();
+  const cityName = capitalizeWords(city.trim());
+  if (compactPostcode && cityName) return `${compactPostcode}, ${cityName}`;
+  return compactPostcode || cityName;
+}
+
+function addressLines(data: AddressLabelData): LabelLine[] {
+  const name = capitalizeWords(data.name.trim());
+  const street = capitalizeWords(data.street.trim());
+  const province = normalizeProvince(data.province);
+  const country = data.country.trim();
+
+  const lines: LabelLine[] = [
+    { text: name, oneLine: true },
+    { text: `${street} ${data.houseNumber.trim()}`.trim(), oneLine: true },
+    { text: formatPostcodeCity(data.postcode, data.city), oneLine: true },
+    { text: province, oneLine: false },
+    { text: country, oneLine: false },
+  ];
+
+  return lines.filter((line) => line.text.length > 0);
+}
+
+function AddressLabelBox({ lines }: { lines: LabelLine[] }) {
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>(lines.map((l) => l.text));
   return (
     <div className="sticker-box sticker-box-full">
       <div ref={containerRef} className="sticker-box-inner">
         {lines.map((line, i) => (
-          <div key={i} className="sticker-line" style={{ fontSize: `${32 * scale}pt` }}>{line}</div>
+          <div
+            key={i}
+            className={`sticker-line${line.oneLine ? ' whitespace-nowrap' : ''}`}
+            style={{ fontSize: `${28 * scale}pt` }}
+          >
+            {line.text}
+          </div>
         ))}
       </div>
     </div>

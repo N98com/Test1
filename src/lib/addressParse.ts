@@ -245,6 +245,48 @@ function provinceForPostcode(postcode: string): string {
   return entry?.province ?? '';
 }
 
+// Zet de eerste letter van elk woord (en van elk koppelteken-deel binnen een
+// woord) in hoofdletters, voor namen/straatnamen/plaatsnamen die altijd met
+// een hoofdletter moeten beginnen. De rest van het woord blijft ongemoeid,
+// zodat iets als een expres in hoofdletters getypte naam niet omgezet wordt.
+export function capitalizeWords(text: string): string {
+  return text
+    .split(' ')
+    .map((word) =>
+      word
+        .split('-')
+        .map((segment) => (segment.length ? segment[0].toUpperCase() + segment.slice(1) : segment))
+        .join('-'),
+    )
+    .join(' ');
+}
+
+// Canonieke schrijfwijze van de 12 provincies: samengestelde namen altijd met
+// koppelteken en beide delen met een hoofdletter (Noord-Holland, Zuid-Holland,
+// Noord-Brabant), ongeacht of de brontekst een spatie, koppelteken of andere
+// hoofdlettergebruik had.
+const PROVINCE_DISPLAY: Record<string, string> = {
+  groningen: 'Groningen',
+  friesland: 'Friesland',
+  'fryslân': 'Fryslân',
+  drenthe: 'Drenthe',
+  overijssel: 'Overijssel',
+  flevoland: 'Flevoland',
+  gelderland: 'Gelderland',
+  utrecht: 'Utrecht',
+  'noord holland': 'Noord-Holland',
+  'zuid holland': 'Zuid-Holland',
+  zeeland: 'Zeeland',
+  'noord brabant': 'Noord-Brabant',
+  limburg: 'Limburg',
+};
+
+export function normalizeProvince(province: string): string {
+  if (!province.trim()) return '';
+  const key = province.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
+  return PROVINCE_DISPLAY[key] ?? capitalizeWords(province);
+}
+
 // Onzichtbare marker die de oorspronkelijke plek van de postcode in de tekst
 // vasthoudt, ook nadat land/provincie/telefoonnummer er later omheen worden
 // weggehaald. Nodig omdat een geplakt adres in allerlei volgordes kan komen
@@ -355,5 +397,13 @@ export function parseAddressBlock(raw: string): ParsedAddress {
     city = province;
   }
 
-  return { name, street, houseNumber, postcode, city, province, country };
+  return {
+    name: capitalizeWords(name),
+    street: capitalizeWords(street),
+    houseNumber,
+    postcode,
+    city: capitalizeWords(city),
+    province: normalizeProvince(province),
+    country,
+  };
 }
