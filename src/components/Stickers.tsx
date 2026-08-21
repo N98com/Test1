@@ -7,6 +7,8 @@ import { StickerPreview, type StickerItem } from './StickerPreview';
 import { StickerHistoryView } from './StickerHistoryView';
 import type { RecordPrintInput } from '../useStickerPrints';
 import { openPrintWindow } from '../lib/printWindow';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../lib/pagination';
 
 interface Props {
   products: Product[];
@@ -20,6 +22,7 @@ interface Props {
 export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, printsLoading }: Props) {
   const [view, setView] = useState<'generate' | 'history'>('generate');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
@@ -40,6 +43,10 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [products, query]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const selectedCount = Object.keys(selected).length;
   const totalStickers = Object.values(selected).reduce((sum, n) => sum + n, 0);
@@ -186,7 +193,10 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Zoek op artikelnummer, EAN of omschrijving..."
             className="input"
           />
@@ -204,7 +214,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-                {sorted.map((product) => {
+                {paginated.map((product) => {
                   const isSelected = selected[product.id] !== undefined;
                   return (
                     <tr
@@ -242,6 +252,10 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
               Geen artikelen gevonden.
             </p>
+          )}
+
+          {sorted.length > 0 && (
+            <Pagination page={currentPage} totalPages={totalPages} totalCount={sorted.length} itemLabel="artikelen" onPageChange={setPage} />
           )}
 
           {printError && (

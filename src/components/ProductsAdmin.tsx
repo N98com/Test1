@@ -2,28 +2,10 @@ import { useState, type FormEvent } from 'react';
 import type { Company, Product } from '../types';
 import { CompanyBadge } from './CompanyBadge';
 import { Field } from './Field';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../lib/pagination';
 
 const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 1000];
-const PAGE_SIZE = 50;
-
-// Bouwt de rij paginanummers op zoals bij Google: altijd de eerste en laatste
-// pagina, de huidige pagina met één buur aan weerszijden, en een "…" waar een
-// stuk wordt overgeslagen (voorkomt tientallen knoppen bij veel pagina's).
-function pageItems(current: number, total: number): (number | 'ellipsis')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-  const items: (number | 'ellipsis')[] = [1];
-  if (current > 3) items.push('ellipsis');
-
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let p = start; p <= end; p += 1) items.push(p);
-
-  if (current < total - 2) items.push('ellipsis');
-  items.push(total);
-
-  return items;
-}
 
 interface Props {
   products: Product[];
@@ -424,49 +406,8 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
         </p>
       )}
 
-      {filtered.length > 0 && totalPages > 1 && (
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Pagina {currentPage} van {totalPages} ({filtered.length} artikelen)
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Vorige
-            </button>
-            {pageItems(currentPage, totalPages).map((item, i) =>
-              item === 'ellipsis' ? (
-                <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400 dark:text-slate-500">…</span>
-              ) : (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setPage(item)}
-                  aria-current={item === currentPage ? 'page' : undefined}
-                  className={`min-w-[2.25rem] rounded-lg px-3 py-2 text-sm font-medium ${
-                    item === currentPage
-                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Volgende
-            </button>
-          </div>
-        </div>
+      {filtered.length > 0 && (
+        <Pagination page={currentPage} totalPages={totalPages} totalCount={filtered.length} itemLabel="artikelen" onPageChange={setPage} />
       )}
     </div>
   );

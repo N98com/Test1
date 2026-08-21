@@ -3,6 +3,8 @@ import type { StickerPrint } from '../types';
 import { StickerPreview, type StickerItem } from './StickerPreview';
 import type { RecordPrintInput } from '../useStickerPrints';
 import { openPrintWindow } from '../lib/printWindow';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../lib/pagination';
 
 interface Props {
   prints: StickerPrint[];
@@ -23,6 +25,11 @@ function formatDateTime(iso: string): string {
 export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
   const [reprint, setReprint] = useState<{ print: StickerPrint; items: StickerItem[]; popup: Window } | null>(null);
   const [printError, setPrintError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(prints.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = prints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function startReprint(print: StickerPrint) {
     // Moet synchroon in de click-handler gebeuren, anders blokkeren pop-upblokkers dit.
@@ -88,7 +95,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-            {prints.map((print) => {
+            {paginated.map((print) => {
               const total = print.items.reduce((sum, item) => sum + item.copies, 0);
               return (
                 <tr key={print.id} className="align-top hover:bg-slate-50 dark:hover:bg-slate-800">
@@ -125,6 +132,10 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
           Nog geen stickers geprint.
         </p>
+      )}
+
+      {prints.length > 0 && (
+        <Pagination page={currentPage} totalPages={totalPages} totalCount={prints.length} itemLabel="prints" onPageChange={setPage} />
       )}
 
       {reprint && (
