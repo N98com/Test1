@@ -19,6 +19,17 @@ function isWdArticle(product?: { articleNumber: string; companyId: string }): bo
   return !!product && product.companyId === 'lisl' && product.articleNumber.trim().toUpperCase().startsWith('WD');
 }
 
+// Sommige artikelnummers zijn eigenlijk geen echt artikelnummer maar een
+// artikelnummer met een aantekening erachter geplakt (bv. "ELV-54-W-Zonder-Driver",
+// omdat er geen apart artikelnummer voor de driverloze variant is). Op de sticker
+// tonen we het echte artikelnummer en de aantekening als eigen regel eronder,
+// in plaats van de hele string als (te lang) artikelnummer af te drukken.
+export function articleNumberLines(articleNumber: string): { main: string; subtitle: string | null } {
+  const match = articleNumber.match(/^(.+)-Zonder[- ]Driver$/i);
+  if (match) return { main: match[1], subtitle: 'Zonder Driver' };
+  return { main: articleNumber, subtitle: null };
+}
+
 // Wandlampen (WD-): wattage staat al in het artikelnummer (bv. "WD-6W-..."), dus niet
 // herhalen in de omschrijving. De resterende tekst wordt in twee regels geknipt op de
 // kelvin-waarde, zodat "Led Wandlamp" en "3000K Zwart/Goud" los blijven i.p.v. één lange regel.
