@@ -245,18 +245,27 @@ function provinceForPostcode(postcode: string): string {
   return entry?.province ?? '';
 }
 
+// Onzichtbare marker die de oorspronkelijke plek van de postcode in de tekst
+// vasthoudt, ook nadat land/provincie/telefoonnummer er later omheen worden
+// weggehaald. Nodig omdat een geplakt adres in allerlei volgordes kan komen
+// (straat+nummer vóór of ná postcode+plaats, met soms een ander cijfer-woord
+// ertussen zoals een klant- of ordernummer): het huisnummer is niet zomaar
+// "het eerste cijfer-woord in de tekst", maar het cijfer-woord dat het dichtst
+// bij de postcode staat, zodat huisnummer en postcode altijd bij elkaar horen.
+const POSTCODE_MARKER = 'POSTCODEMARKER';
+
 export function parseAddressBlock(raw: string): ParsedAddress {
   let text = raw.replace(/\n/g, ' ').replace(/[, ]/g, ' ').replace(/\s+/g, ' ').trim();
 
   // E-mail eruit.
   text = text.replace(/\S+@\S+\.\S+/g, ' ');
 
-  // Postcode eruit (en genormaliseerd bewaren).
+  // Postcode eruit (en genormaliseerd bewaren), met een marker op zijn plek.
   let postcode = '';
   const postcodeMatch = text.match(/\b(\d{4})\s?([A-Za-z]{2})\b/);
   if (postcodeMatch) {
     postcode = `${postcodeMatch[1]} ${postcodeMatch[2].toUpperCase()}`;
-    text = text.replace(postcodeMatch[0], ' ');
+    text = text.replace(postcodeMatch[0], ` ${POSTCODE_MARKER} `);
   }
 
   // Land eruit; "Nederland" wordt genegeerd, een ander land bewaard.
@@ -280,8 +289,22 @@ export function parseAddressBlock(raw: string): ParsedAddress {
 
   text = text.replace(/\s+/g, ' ').trim();
   const words = text.length ? text.split(' ') : [];
+  const markerIndex = words.indexOf(POSTCODE_MARKER);
 
-  const numberIndex = words.findIndex((w) => /^\d/.test(w));
+  // Kandidaat-huisnummers: alle overgebleven cijfer-woorden, m.u.v. de marker zelf.
+  // Kies de kandidaat die het dichtst bij de postcode staat, niet zomaar de eerste
+  // in de hele tekst (anders kaapt bv. een klantnummer vóór het echte adres het
+  // huisnummer-veld terwijl postcode/plaats gewoon van het echte adres komen).
+  const digitIndices: number[] = [];
+  for (let i = 0; i < words.length; i += 1) {
+    if (i !== markerIndex && /^\d/.test(words[i])) digitIndices.push(i);
+  }
+  let numberIndex = -1;
+  if (digitIndices.length > 0) {
+    numberIndex = markerIndex === -1
+      ? digitIndices[0]
+      : digitIndices.reduce((best, i) => (Math.abs(i - markerIndex) < Math.abs(best - markerIndex) ? i : best));
+  }
 
   let name = '';
   let street = '';
@@ -290,12 +313,24 @@ export function parseAddressBlock(raw: string): ParsedAddress {
 
   if (numberIndex === -1) {
     // Geen huisnummer gevonden: geen straat/plaats te bepalen.
-    ({ name, street } = splitNameAndStreet(words));
+    ({ name, street } = splitNameAndStreet(words.filter((w) => w !== POSTCODE_MARKER)));
   } else {
-    const beforeNumber = words.slice(0, numberIndex);
-    ({ name, street } = splitNameAndStreet(beforeNumber));
     houseNumber = words[numberIndex];
-    cityWords = words.slice(numberIndex + 1);
+    let afterNumberIndex = numberIndex + 1;
+    // Toevoeging direct na het huisnummer ("Geelster 3 A") bij het nummer trekken,
+    // anders belandt die per ongeluk bij de plaatsnaam.
+    if (
+      afterNumberIndex < words.length &&
+      words[afterNumberIndex] !== POSTCODE_MARKER &&
+      /^[A-Za-z]{1,2}$/.test(words[afterNumberIndex])
+    ) {
+      houseNumber += ` ${words[afterNumberIndex]}`;
+      afterNumberIndex += 1;
+    }
+
+    const beforeNumber = words.slice(0, numberIndex).filter((w) => w !== POSTCODE_MARKER);
+    ({ name, street } = splitNameAndStreet(beforeNumber));
+    cityWords = words.slice(afterNumberIndex).filter((w) => w !== POSTCODE_MARKER);
   }
 
   // Dubbel voorkomende plaatsnaam (bv. twee keer "Oldenzaal") ontdubbelen.
