@@ -158,11 +158,20 @@ body {
   white-space: nowrap;
 }
 
-/* Extra dikgedrukt (zwaarder dan de standaard .sticker-line) voor de twee
-   belangrijkste regels op een sticker: het artikelnummer (titel) en de batch,
-   zodat die duidelijk blijven opvallen tussen de overige tekst. */
+/* Extra dikgedrukt (zwaarder dan de standaard .sticker-line) voor de
+   belangrijkste regels op een sticker: het artikelnummer (titel), de batch
+   en het aantal, zodat die duidelijk blijven opvallen tussen de overige tekst. */
 .sticker-emphasis {
   font-weight: 900;
+}
+
+/* Duwt het aantal (via een auto-margin, binnen dezelfde flex-column als de
+   rest van de bovenste box) helemaal naar de onderkant van de box, met de
+   padding van .sticker-box als marge tot de rand. Bij overflow (te veel tekst
+   om te tonen) valt dit vanzelf terug op de normale, bovenaan uitlijnende
+   volgorde: zie .sticker-box-main .sticker-box-inner hierboven. */
+.sticker-count-line {
+  margin-top: auto;
 }
 
 /* Rendered in its own dedicated popup tab (see openPrintWindow), so it's the

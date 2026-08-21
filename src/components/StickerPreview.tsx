@@ -33,7 +33,7 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
         {descriptionLines.map((line, i) => (
           <div key={i} className="sticker-line" style={{ fontSize: `${30 * scale}pt` }}>{line}</div>
         ))}
-        <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>({unitsPerBox} st)</div>
+        <div className="sticker-line sticker-emphasis sticker-count-line" style={{ fontSize: `${34 * scale}pt` }}>({unitsPerBox} st)</div>
       </div>
     </div>
   );
