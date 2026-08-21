@@ -158,6 +158,13 @@ body {
   white-space: nowrap;
 }
 
+/* Extra dikgedrukt (zwaarder dan de standaard .sticker-line) voor de twee
+   belangrijkste regels op een sticker: het artikelnummer (titel) en de batch,
+   zodat die duidelijk blijven opvallen tussen de overige tekst. */
+.sticker-emphasis {
+  font-weight: 900;
+}
+
 /* Rendered in its own dedicated popup tab (see openPrintWindow), so it's the
    on-screen preview AND the print source at once — always visible, no
    display:none/off-screen tricks needed (those would break shrink-to-fit,

@@ -26,7 +26,7 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
   return (
     <div className="sticker-box sticker-box-main">
       <div ref={containerRef} className="sticker-box-inner">
-        <div className="sticker-line sticker-article-number" style={{ fontSize: `${40 * scale}pt` }}>{main}</div>
+        <div className="sticker-line sticker-article-number sticker-emphasis" style={{ fontSize: `${40 * scale}pt` }}>{main}</div>
         {subtitle && (
           <div className="sticker-line" style={{ fontSize: `${32 * scale}pt` }}>{subtitle}</div>
         )}
@@ -46,7 +46,7 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
     return (
       <div className="sticker-box sticker-box-batch">
         <div ref={containerRef} className="sticker-box-inner">
-          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
+          <div className="sticker-line sticker-emphasis" style={{ fontSize: `${28 * scale}pt` }}>{batchNumber}</div>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   return (
     <div className="sticker-box sticker-box-batch">
       <div className="sticker-box-batch-row">
-        <div className="sticker-line sticker-box-batch-number" style={{ fontSize: '28pt' }}>{batchNumber}</div>
+        <div className="sticker-line sticker-box-batch-number sticker-emphasis" style={{ fontSize: '28pt' }}>{batchNumber}</div>
         <div className="sticker-box-batch-barcode">
           <BarcodeSvg ean={ean} width={1.4} height={36} fontSize={13} margin={0} />
         </div>
