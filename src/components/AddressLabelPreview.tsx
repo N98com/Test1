@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
+import { usePrintPopupLifecycle } from '../usePrintPopupLifecycle';
 import { capitalizeWords, normalizeProvince } from '../lib/addressParse';
 
 export interface AddressLabelData {
@@ -73,51 +73,11 @@ function AddressLabelBox({ lines }: { lines: LabelLine[] }) {
   );
 }
 
-// 150mm omgerekend naar CSS-pixels (96dpi, de standaard mm->px-conversie van browsers).
-const STICKER_WIDTH_PX = 150 * (96 / 25.4);
-
 // Zelfde popup-aanpak als StickerPreview: render in een los, al geopend
 // browsertabblad, niet als overlay op de huidige pagina.
 export function AddressLabelPreview({ data, popup, onClose, onPrint }: Props) {
-  const [closed, setClosed] = useState(false);
+  const { closed } = usePrintPopupLifecycle(popup, 'Brief label', onClose);
   const lines = addressLines(data);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        popup.close();
-        onClose();
-      }
-    }
-    popup.document.addEventListener('keydown', handleKeyDown);
-
-    const pollClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(pollClosed);
-        setClosed(true);
-        onClose();
-      }
-    }, 500);
-
-    return () => {
-      popup.document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(pollClosed);
-    };
-  }, [popup, onClose]);
-
-  useEffect(() => {
-    function updateScale() {
-      const scale = Math.min(1, (popup.innerWidth - 32) / STICKER_WIDTH_PX);
-      popup.document.documentElement.style.setProperty('--sticker-scale', String(scale));
-    }
-    updateScale();
-    const raf = popup.requestAnimationFrame(updateScale);
-    popup.addEventListener('resize', updateScale);
-    return () => {
-      popup.cancelAnimationFrame(raf);
-      popup.removeEventListener('resize', updateScale);
-    };
-  }, [popup]);
 
   if (closed || popup.closed) return null;
 

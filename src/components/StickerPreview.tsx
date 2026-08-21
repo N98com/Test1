@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShrinkToFit } from '../useShrinkToFit';
+import { usePrintPopupLifecycle } from '../usePrintPopupLifecycle';
 import { articleNumberLines, stickerDescriptionLines } from '../lib/stickerText';
 import { BarcodeSvg } from './BarcodeSvg';
 import type { Product } from '../types';
@@ -64,57 +64,11 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
   );
 }
 
-// 150mm omgerekend naar CSS-pixels (96dpi, de standaard mm->px-conversie van browsers).
-const STICKER_WIDTH_PX = 150 * (96 / 25.4);
-
 // Rendert in een los, al geopend browsertabblad (popup), niet als overlay op de
 // huidige pagina: window.print()/Escape/sluiten moeten dus op dát venster werken,
 // niet op het venster van de app zelf.
 export function StickerPreview({ items, batchNumber, includeBarcode, popup, onClose, onPrint }: Props) {
-  const [closed, setClosed] = useState(false);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        popup.close();
-        onClose();
-      }
-    }
-    popup.document.addEventListener('keydown', handleKeyDown);
-
-    // Gebruiker kan het tabblad ook gewoon zelf sluiten (kruisje) i.p.v. via de knop.
-    const pollClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(pollClosed);
-        setClosed(true);
-        onClose();
-      }
-    }, 500);
-
-    return () => {
-      popup.document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(pollClosed);
-    };
-  }, [popup, onClose]);
-
-  useEffect(() => {
-    // Schaalt de op-scherm weergave (niet het printresultaat) zodat de volledige
-    // 150mm-brede sticker altijd in de viewport past, ook op een smal telefoonscherm.
-    function updateScale() {
-      const scale = Math.min(1, (popup.innerWidth - 32) / STICKER_WIDTH_PX);
-      popup.document.documentElement.style.setProperty('--sticker-scale', String(scale));
-    }
-    updateScale();
-    // Direct na het openen kan popup.innerWidth nog even afwijken van de uiteindelijke,
-    // gesettelde waarde (viewport-meta/layout die nog moet bijtrekken) — nog een keer
-    // meten na een frame vangt dat op.
-    const raf = popup.requestAnimationFrame(updateScale);
-    popup.addEventListener('resize', updateScale);
-    return () => {
-      popup.cancelAnimationFrame(raf);
-      popup.removeEventListener('resize', updateScale);
-    };
-  }, [popup]);
+  const { closed } = usePrintPopupLifecycle(popup, 'Stickers', onClose);
 
   if (closed || popup.closed) return null;
 
