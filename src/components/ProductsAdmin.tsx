@@ -4,6 +4,7 @@ import { CompanyBadge } from './CompanyBadge';
 import { Field } from './Field';
 
 const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 1000];
+const PAGE_SIZE = 50;
 
 interface Props {
   products: Product[];
@@ -51,6 +52,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
 
   const [query, setQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
+  const [page, setPage] = useState(1);
 
   const sorted = [...products].sort((a, b) => a.articleNumber.localeCompare(b.articleNumber));
 
@@ -64,6 +66,10 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
         product.description.toLowerCase().includes(normalizedQuery) ||
         product.ean.toLowerCase().includes(normalizedQuery),
     );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function resetNewForm() {
     setNewArticleNumber('');
@@ -251,14 +257,20 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
           className="input"
           placeholder="Zoek op artikelnummer, omschrijving of EAN..."
           type="search"
         />
         <select
           value={companyFilter}
-          onChange={(e) => setCompanyFilter(e.target.value)}
+          onChange={(e) => {
+            setCompanyFilter(e.target.value);
+            setPage(1);
+          }}
           className="input sm:w-48"
         >
           <option value="all">Alle bedrijven</option>
@@ -281,7 +293,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-            {filtered.map((product) => {
+            {paginated.map((product) => {
               const isEditing = editingId === product.id;
               if (isEditing && draft) {
                 return (
@@ -391,6 +403,30 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
               : 'Nog geen artikelen.'
             : 'Geen artikelen gevonden voor deze zoekopdracht.'}
         </p>
+      )}
+
+      {filtered.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Vorige
+          </button>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Pagina {currentPage} van {totalPages} ({filtered.length} artikelen)
+          </p>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Volgende
+          </button>
+        </div>
       )}
     </div>
   );

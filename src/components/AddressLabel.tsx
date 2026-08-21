@@ -45,9 +45,7 @@ export function AddressLabel() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Plak hieronder de persoonsgegevens (naam en adres, in willekeurige volgorde). Telefoonnummers,
-        e-mailadressen en "Nederland" worden automatisch genegeerd; ontbrekende provincie wordt bepaald
-        aan de hand van de postcode. Controleer en corrigeer de velden voor het printen.
+        Plak hieronder de persoonsgegevens (naam en adres, in willekeurige volgorde).
       </p>
 
       <Field label="Geplakte gegevens">
