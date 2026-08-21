@@ -97,6 +97,11 @@ body {
   margin-top: 4mm;
 }
 
+/* Brieflabel: één enkel vak dat de volledige sticker vult (geen apart batch-vak). */
+.sticker-box-full {
+  height: 100%;
+}
+
 .sticker-box-inner {
   height: 100%;
   width: 100%;

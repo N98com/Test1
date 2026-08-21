@@ -10,11 +10,12 @@ import { OutakeForm } from './components/OutakeForm';
 import { WarehouseView } from './components/WarehouseView';
 import { ProductsAdmin } from './components/ProductsAdmin';
 import { Stickers } from './components/Stickers';
+import { AddressLabel } from './components/AddressLabel';
 import { Barcodes } from './components/Barcodes';
 import { AccountsAdmin } from './components/AccountsAdmin';
 import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'barcodes' | 'accounts';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'addressLabel' | 'barcodes' | 'accounts';
 
 // De tool wordt nu alleen gebruikt voor productbeheer en stickers, niet meer voor
 // voorraadbeheer. Deze tabs zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
@@ -133,6 +134,7 @@ function AuthenticatedApp({
     ...(SHOW_WAREHOUSES_TAB ? [{ id: 'warehouses' as Tab, label: 'Voorraad' }] : []),
     { id: 'products', label: 'Producten' },
     { id: 'stickers', label: 'Stickers' },
+    { id: 'addressLabel', label: 'Brief label' },
     { id: 'barcodes', label: 'Barcode generator' },
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
@@ -231,6 +233,7 @@ function AuthenticatedApp({
                   printsLoading={stickerPrintsLoading}
                 />
               )}
+              {tab === 'addressLabel' && <AddressLabel />}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
               {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
             </>
