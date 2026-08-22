@@ -81,16 +81,24 @@ body {
 }
 
 /* Op productstickers (niet op het brieflabel, dat ook de .sticker-klasse
-   deelt) staat onder de batch nog een klein bedrijfslogo; de standaard
-   padding-bottom van .sticker geeft daar niet genoeg ruimte voor. */
+   deelt) staat bovenaan nog een klein bedrijfslogo (icoon + naam); de
+   standaard padding-top van .sticker geeft daar niet genoeg ruimte voor. */
 .sticker-has-logo {
-  padding-bottom: 4mm;
+  padding-top: 5mm;
 }
 
-.sticker-company-logo {
+.sticker-company-header {
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 2mm;
+  gap: 1.5mm;
+  margin-bottom: 2mm;
+}
+
+.sticker-company-header-text {
+  font-weight: 700;
+  font-size: 7pt;
+  letter-spacing: 0.2pt;
 }
 
 .sticker-box {

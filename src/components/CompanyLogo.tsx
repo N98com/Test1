@@ -1,13 +1,12 @@
-// Kleine, vereenvoudigde zwart-witversie van het bedrijfslogo, puur als
-// visuele herkenning onder de batch op de sticker. Geen exacte reproductie
-// van het echte logo (op deze afdrukschaal, een paar mm, is fijn detail toch
-// niet leesbaar) — wel herkenbaar aan silhouet, als inline SVG zodat het
-// scherp blijft op elke schaal en er geen los PNG-bestand ingeladen hoeft te
-// worden.
+// Klein, vereenvoudigd zwart-wit logo (icoon + naam) bovenaan de sticker, ter
+// herkenning van het bedrijf. Geen exacte reproductie van het echte logo (op
+// deze afdrukschaal, een paar mm, is fijn detail toch niet leesbaar) — wel
+// herkenbaar aan icoon + tekst, als inline SVG/tekst zodat het scherp blijft
+// op elke schaal en er geen los PNG-bestand ingeladen hoeft te worden.
 
 function EcobrightMark({ heightMm }: { heightMm: number }) {
   return (
-    <svg viewBox="0 0 24 24" style={{ height: `${heightMm}mm`, width: `${heightMm}mm` }} aria-hidden="true">
+    <svg viewBox="0 0 24 24" style={{ height: `${heightMm}mm`, width: `${heightMm}mm`, flexShrink: 0 }} aria-hidden="true">
       <circle cx="12" cy="12" r="11" fill="#000" />
       <path
         fill="#fff"
@@ -21,14 +20,28 @@ function EcobrightMark({ heightMm }: { heightMm: number }) {
 
 function LedInbouwSpotsMark({ heightMm }: { heightMm: number }) {
   return (
-    <svg viewBox="0 0 24 24" style={{ height: `${heightMm}mm`, width: `${heightMm}mm` }} aria-hidden="true">
+    <svg viewBox="0 0 24 24" style={{ height: `${heightMm}mm`, width: `${heightMm}mm`, flexShrink: 0 }} aria-hidden="true">
       <path fill="#000" d="M13 2 4.09 14H12l-1.36 8.75L20 9h-8z" />
     </svg>
   );
 }
 
-export function CompanyLogo({ companyId, heightMm = 4 }: { companyId: string; heightMm?: number }) {
-  if (companyId === 'eb') return <EcobrightMark heightMm={heightMm} />;
-  if (companyId === 'lisl') return <LedInbouwSpotsMark heightMm={heightMm} />;
+export function CompanyHeader({ companyId }: { companyId: string }) {
+  if (companyId === 'eb') {
+    return (
+      <div className="sticker-company-header">
+        <EcobrightMark heightMm={3.5} />
+        <span className="sticker-company-header-text">ecobright</span>
+      </div>
+    );
+  }
+  if (companyId === 'lisl') {
+    return (
+      <div className="sticker-company-header">
+        <LedInbouwSpotsMark heightMm={3.5} />
+        <span className="sticker-company-header-text">ledinbouwspotsleds</span>
+      </div>
+    );
+  }
   return null;
 }
