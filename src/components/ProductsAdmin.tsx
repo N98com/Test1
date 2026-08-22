@@ -5,7 +5,7 @@ import { Field } from './Field';
 import { Pagination } from './Pagination';
 import { PAGE_SIZE } from '../lib/pagination';
 
-const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 1000];
+const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 200, 1000];
 
 // Onthoudt het laatst gebruikte bedrijf en aantal per volle doos (ook na een
 // paginaherlaad), zodat je die niet voor elk nieuw artikel opnieuw hoeft te
