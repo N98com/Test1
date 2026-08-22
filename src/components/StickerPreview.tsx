@@ -3,6 +3,7 @@ import { useShrinkToFit } from '../useShrinkToFit';
 import { usePrintPopupLifecycle } from '../usePrintPopupLifecycle';
 import { articleNumberLines, stickerDescriptionLines } from '../lib/stickerText';
 import { BarcodeSvg } from './BarcodeSvg';
+import { CompanyLogo } from './CompanyLogo';
 import type { Product } from '../types';
 
 export interface StickerItem {
@@ -117,7 +118,7 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
       <div className="sticker-print-area">
         {items.map((item) => (
           <div key={item.key} className="sticker-scale-outer">
-            <div className="sticker shadow-lg print:shadow-none">
+            <div className="sticker sticker-has-logo shadow-lg print:shadow-none">
               <StickerMainBox
                 articleNumber={item.product.articleNumber}
                 description={item.product.description}
@@ -125,6 +126,9 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
                 companyId={item.product.companyId}
               />
               <StickerBatchBox batchNumber={batchNumber} ean={item.product.ean} includeBarcode={includeBarcode} />
+              <div className="sticker-company-logo">
+                <CompanyLogo companyId={item.product.companyId} />
+              </div>
             </div>
           </div>
         ))}

@@ -80,6 +80,19 @@ body {
   break-after: auto;
 }
 
+/* Op productstickers (niet op het brieflabel, dat ook de .sticker-klasse
+   deelt) staat onder de batch nog een klein bedrijfslogo; de standaard
+   padding-bottom van .sticker geeft daar niet genoeg ruimte voor. */
+.sticker-has-logo {
+  padding-bottom: 4mm;
+}
+
+.sticker-company-logo {
+  display: flex;
+  justify-content: center;
+  margin-top: 2mm;
+}
+
 .sticker-box {
   width: 100%;
   border: 0.3mm solid #000000;
