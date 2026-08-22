@@ -1,3 +1,18 @@
+// Verwijderde stukjes (volt/lumen/wattage/etc.) laten soms een leeg segment
+// achter tussen " - "-scheidingstekens (bv. "5W -  - wit" of, als het eerste
+// of laatste stukje verwijderd is, een los streepje aan het begin/eind).
+// Zo'n leeg segment (en de streepjes eromheen) wordt hier opgeruimd. Een
+// "kale" streep zonder spaties eromheen (zoals in een bereik als
+// "2000-3000K") is geen scheidingsteken en blijft dus staan: die komt nooit
+// twee keer achter elkaar voor, dus de {2,}-herhaling hieronder raakt 'm niet.
+function collapseEmptySegments(text: string): string {
+  return text
+    .replace(/(?:\s*-\s*){2,}/g, ' - ')
+    .replace(/^\s*-\s*/, '')
+    .replace(/\s*-\s*$/, '')
+    .trim();
+}
+
 // Verkort eenheden op stickers om ruimte te besparen: "5 watt" -> "5W", "2700 kelvin" -> "2700K".
 // Volt en lumen worden volledig weggelaten (niet relevant op de sticker).
 export function abbreviateForSticker(description: string, product?: { articleNumber: string; companyId: string }): string {
@@ -5,12 +20,17 @@ export function abbreviateForSticker(description: string, product?: { articleNum
     .replace(/\s*\d+(?:[.,]\d+)?\s*volt\b/gi, '')
     .replace(/(\d+(?:[.,]\d+)?)\s*watt\b/gi, '$1W')
     .replace(/(\d+(?:[.,]\d+)?)\s*kelvin\b/gi, '$1K')
-    .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '');
+    .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '')
+    // Korte "k"-afkorting voor kelvin (bv. "2700k", ook in een bereik als
+    // "2000-3000k") moet net als het volledige woord altijd een hoofdletter zijn.
+    .replace(/(\d)\s*k\b/gi, '$1K');
 
   // Wandlampen van LISL (artikelnummer begint met "WD"): "Up en/& Down" niet op de sticker.
   if (isWdArticle(product)) {
     result = result.replace(/\bup\s*(?:en|&|and)\s*down\b/gi, '');
   }
+
+  result = collapseEmptySegments(result);
 
   return result.replace(/\s{2,}/g, ' ').trim();
 }
@@ -37,8 +57,9 @@ export function stickerDescriptionLines(description: string, product?: { article
   const abbreviated = abbreviateForSticker(description, product);
   if (!isWdArticle(product)) return [abbreviated];
 
-  const withoutWattage = abbreviated
-    .replace(/\b\d+(?:[.,]\d+)?W\b/gi, '')
+  const withoutWattage = collapseEmptySegments(
+    abbreviated.replace(/\b\d+(?:[.,]\d+)?W\b/gi, ''),
+  )
     .replace(/\s{2,}/g, ' ')
     .trim();
 
@@ -46,7 +67,7 @@ export function stickerDescriptionLines(description: string, product?: { article
   const kelvinMatch = withoutWattage.match(/\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?K\b/i);
   if (!kelvinMatch || kelvinMatch.index === undefined) return [withoutWattage];
 
-  const before = withoutWattage.slice(0, kelvinMatch.index).trim();
+  const before = collapseEmptySegments(withoutWattage.slice(0, kelvinMatch.index));
   const from = withoutWattage.slice(kelvinMatch.index).trim();
   if (!before || !from) return [withoutWattage];
 
