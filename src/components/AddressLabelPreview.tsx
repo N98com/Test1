@@ -62,8 +62,8 @@ function AddressLabelBox({ lines }: { lines: LabelLine[] }) {
         {lines.map((line, i) => (
           <div
             key={i}
-            className={`sticker-line${line.oneLine ? ' whitespace-nowrap' : ''}`}
-            style={{ fontSize: `${28 * scale}pt` }}
+            className="sticker-line"
+            style={{ fontSize: `${28 * scale}pt`, whiteSpace: line.oneLine ? 'nowrap' : undefined }}
           >
             {line.text}
           </div>

@@ -65,28 +65,94 @@ function lumaDescriptionLines(description: string): string[] {
   return [hasZigbee ? 'Led Dimmer Zigbee' : 'Led Dimmer'];
 }
 
-// Wandlampen (WD-): wattage staat al in het artikelnummer (bv. "WD-6W-..."), dus niet
-// herhalen in de omschrijving. De resterende tekst wordt in twee regels geknipt op de
-// kelvin-waarde, zodat "Led Wandlamp" en "3000K Zwart/Goud" los blijven i.p.v. één lange regel.
+// Bekende kleurnamen (met een eventuele glans-aanduiding ervoor, die zelf niet
+// getoond wordt: "Mat zwart" -> "Zwart"). Alleen deze woorden tellen als kleur;
+// verdere styling-taal ("kantelbaar", "dimbaar", enz.) hoort bij "irrelevante
+// informatie" en wordt niet apart herkend, maar valt vanzelf weg omdat het niet
+// in de resterende "type"-tekst wordt opgenomen (zie extractStickerFacts).
+const COLOR_WORDS = [
+  'zwart', 'wit', 'goud', 'zilver', 'brons', 'grijs', 'antraciet', 'chroom',
+  'koper', 'messing', 'rvs', 'inox', 'naturel', 'beige', 'bruin', 'rood',
+  'blauw', 'groen', 'geel', 'oranje',
+];
+const COLOR_QUALIFIERS = ['mat', 'glans', 'glanzend', 'geborsteld', 'gepolijst', 'satijn'];
+
+interface StickerFacts {
+  type: string;
+  watt: string;
+  kelvin: string;
+  color: string;
+}
+
+// Nieuwe, algemene aanpak (i.p.v. de hele omschrijving proberen te tonen):
+// haalt alleen de vier dingen eruit die er echt toe doen op een sticker -
+// producttype, wattage, kelvin en kleur - en laat al het overige (dimbaar,
+// gestuurd, fase-afsnijding, enz.) gewoon weg. Watt/kelvin/volt/lumen-notatie
+// wordt genormaliseerd zoals eerder (zie de hoofdletter-K- en Max.-regels
+// hierboven), maar dan als aparte velden i.p.v. inline vervangingen.
+function extractStickerFacts(description: string, options: { includeWatt: boolean }): StickerFacts {
+  let text = description
+    .replace(/[|,]/g, ' ')
+    .replace(/\s*\d+(?:[.,]\d+)?\s*volt\b/gi, '')
+    .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '')
+    // Functionele beschrijving (niet type/watt/kelvin/kleur) hoort niet meer
+    // op de sticker thuis, bv. "Up en/& Down" bij wandlampen of "Maximaal"
+    // (het getal zelf blijft gewoon staan, alleen dit woord ervoor niet).
+    .replace(/\bup\s*(?:en|&|and)\s*down\b/gi, '')
+    .replace(/\bmaximaal\b/gi, '')
+    .replace(/\bdimbaar\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  let watt = '';
+  const wattMatch = text.match(/\b(\d+(?:[.,]\d+)?)\s*(?:w\b|watt\b)/i);
+  if (wattMatch) {
+    watt = `${wattMatch[1]}W`;
+    text = text.replace(wattMatch[0], ' ');
+  }
+
+  let kelvin = '';
+  const kelvinMatch = text.match(/\b(\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?)\s*(?:k\b|kelvin\b)/i);
+  if (kelvinMatch) {
+    kelvin = `${kelvinMatch[1].replace(/\s+/g, '')}K`;
+    text = text.replace(kelvinMatch[0], ' ');
+  }
+
+  let color = '';
+  const colorAlternation = COLOR_WORDS.join('|');
+  for (const word of COLOR_WORDS) {
+    // Ook een dubbele kleur meenemen (bv. "Zwart/Goud"), anders blijft de
+    // tweede kleur na "/" los in de type-tekst hangen.
+    const re = new RegExp(`\\b(?:(?:${COLOR_QUALIFIERS.join('|')})\\s+)?(${word})\\b(?:\\s*/\\s*(${colorAlternation})\\b)?`, 'i');
+    const match = text.match(re);
+    if (match) {
+      const capitalize = (w: string) => w[0].toUpperCase() + w.slice(1).toLowerCase();
+      color = match[2] ? `${capitalize(match[1])}/${capitalize(match[2])}` : capitalize(match[1]);
+      text = text.replace(match[0], ' ');
+      break;
+    }
+  }
+
+  const type = collapseEmptySegments(text).replace(/\s{2,}/g, ' ').trim();
+
+  return { type, watt: options.includeWatt ? watt : '', kelvin, color };
+}
+
+function factsToLines(facts: StickerFacts): string[] {
+  const specLine = [facts.watt, facts.kelvin, facts.color].filter(Boolean).join(' ');
+  return [facts.type, specLine].filter(Boolean);
+}
+
+// Elk artikel toont voortaan alleen het producttype en de kernspecs (watt,
+// kelvin, kleur) in maximaal twee regels - geen losse woorden als "dimbaar"
+// of "fase-afsnijding" meer, die maken de sticker onnodig druk. Luma-
+// artikelen (dimmers) vallen hier expliciet buiten: die hebben geen kleur/
+// kelvin en tonen altijd "Led Dimmer" (+ Zigbee, zie hierboven). Wandlampen
+// (WD-) laten watt weg omdat dat al in het artikelnummer staat (bv. "WD-6W-...").
 export function stickerDescriptionLines(description: string, product?: { articleNumber: string; companyId: string }): string[] {
   if (isLumaArticle(product)) return lumaDescriptionLines(description);
 
-  const abbreviated = abbreviateForSticker(description, product);
-  if (!isWdArticle(product)) return [abbreviated];
-
-  const withoutWattage = collapseEmptySegments(
-    abbreviated.replace(/\b\d+(?:[.,]\d+)?W\b/gi, ''),
-  )
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-
-  // Ook kelvin-bereiken zoals "2200-6500K" in hun geheel meenemen, niet alleen het laatste getal.
-  const kelvinMatch = withoutWattage.match(/\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?K\b/i);
-  if (!kelvinMatch || kelvinMatch.index === undefined) return [withoutWattage];
-
-  const before = collapseEmptySegments(withoutWattage.slice(0, kelvinMatch.index));
-  const from = withoutWattage.slice(kelvinMatch.index).trim();
-  if (!before || !from) return [withoutWattage];
-
-  return [before, from];
+  const facts = extractStickerFacts(description, { includeWatt: !isWdArticle(product) });
+  const lines = factsToLines(facts);
+  return lines.length ? lines : [description.trim()];
 }
