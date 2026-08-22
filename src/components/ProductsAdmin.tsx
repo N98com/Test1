@@ -7,6 +7,12 @@ import { PAGE_SIZE } from '../lib/pagination';
 
 const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 1000];
 
+// Onthoudt het laatst gebruikte bedrijf en aantal per volle doos (ook na een
+// paginaherlaad), zodat je die niet voor elk nieuw artikel opnieuw hoeft te
+// kiezen als je er meerdere achter elkaar toevoegt.
+const LAST_COMPANY_KEY = 'productsAdmin.lastCompanyId';
+const LAST_UNITS_PER_BOX_KEY = 'productsAdmin.lastUnitsPerBox';
+
 interface Props {
   products: Product[];
   companies: Company[];
@@ -46,8 +52,8 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
   const [newArticleNumber, setNewArticleNumber] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newEan, setNewEan] = useState('');
-  const [newCompanyId, setNewCompanyId] = useState(companies[0]?.id ?? '');
-  const [newUnitsPerBox, setNewUnitsPerBox] = useState('50');
+  const [newCompanyId, setNewCompanyId] = useState(() => localStorage.getItem(LAST_COMPANY_KEY) || companies[0]?.id || '');
+  const [newUnitsPerBox, setNewUnitsPerBox] = useState(() => localStorage.getItem(LAST_UNITS_PER_BOX_KEY) || '50');
   const [creating, setCreating] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
@@ -76,7 +82,9 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
     setNewArticleNumber('');
     setNewDescription('');
     setNewEan('');
-    setNewUnitsPerBox('50');
+    // Bedrijf en aantal per volle doos blijven bewust staan (zie
+    // LAST_COMPANY_KEY/LAST_UNITS_PER_BOX_KEY): dat zijn meestal dezelfde
+    // waarden voor een reeks artikelen die achter elkaar wordt toegevoegd.
   }
 
   async function handleCreate(e: FormEvent) {
@@ -120,6 +128,9 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       setFeedback({ text: createError ?? 'Aanmaken van artikel is mislukt.', type: 'error' });
       return;
     }
+
+    localStorage.setItem(LAST_COMPANY_KEY, newCompanyId);
+    localStorage.setItem(LAST_UNITS_PER_BOX_KEY, newUnitsPerBox);
 
     resetNewForm();
     setShowNewForm(false);
