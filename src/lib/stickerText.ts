@@ -23,7 +23,9 @@ export function abbreviateForSticker(description: string, product?: { articleNum
     .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '')
     // Korte "k"-afkorting voor kelvin (bv. "2700k", ook in een bereik als
     // "2000-3000k") moet net als het volledige woord altijd een hoofdletter zijn.
-    .replace(/(\d)\s*k\b/gi, '$1K');
+    .replace(/(\d)\s*k\b/gi, '$1K')
+    // "Maximaal 150W" -> "Max. 150W": scheelt ruimte op de sticker.
+    .replace(/\bmaximaal\b/gi, 'Max.');
 
   // Wandlampen van LISL (artikelnummer begint met "WD"): "Up en/& Down" niet op de sticker.
   if (isWdArticle(product)) {
@@ -39,6 +41,10 @@ function isWdArticle(product?: { articleNumber: string; companyId: string }): bo
   return !!product && product.companyId === 'lisl' && product.articleNumber.trim().toUpperCase().startsWith('WD');
 }
 
+function isLumaArticle(product?: { articleNumber: string; companyId: string }): boolean {
+  return !!product && product.articleNumber.trim().toUpperCase().startsWith('LUMA');
+}
+
 // Sommige artikelnummers zijn eigenlijk geen echt artikelnummer maar een
 // artikelnummer met een aantekening erachter geplakt (bv. "ELV-54-W-Zonder-Driver",
 // omdat er geen apart artikelnummer voor de driverloze variant is). Op de sticker
@@ -50,10 +56,21 @@ export function articleNumberLines(articleNumber: string): { main: string; subti
   return { main: articleNumber, subtitle: null };
 }
 
+// Luma-artikelen (artikelnummer begint met "LUMA"): de omschrijving bevat
+// veel meer detail dan op de sticker past. Daar is altijd sprake van een Led
+// Dimmer; alleen "Zigbee" (indien in de omschrijving vermeld) is relevant
+// genoeg om erbij te zetten, de rest wordt weggelaten.
+function lumaDescriptionLines(description: string): string[] {
+  const hasZigbee = /zigbee/i.test(description) && !/\b(?:geen|niet|zonder)\s+zigbee/i.test(description);
+  return [hasZigbee ? 'Led Dimmer Zigbee' : 'Led Dimmer'];
+}
+
 // Wandlampen (WD-): wattage staat al in het artikelnummer (bv. "WD-6W-..."), dus niet
 // herhalen in de omschrijving. De resterende tekst wordt in twee regels geknipt op de
 // kelvin-waarde, zodat "Led Wandlamp" en "3000K Zwart/Goud" los blijven i.p.v. één lange regel.
 export function stickerDescriptionLines(description: string, product?: { articleNumber: string; companyId: string }): string[] {
+  if (isLumaArticle(product)) return lumaDescriptionLines(description);
+
   const abbreviated = abbreviateForSticker(description, product);
   if (!isWdArticle(product)) return [abbreviated];
 

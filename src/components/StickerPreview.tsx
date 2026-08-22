@@ -23,18 +23,25 @@ interface Props {
 function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: { articleNumber: string; description: string; unitsPerBox: number; companyId: string }) {
   const { main, subtitle } = articleNumberLines(articleNumber);
   const descriptionLines = stickerDescriptionLines(description, { articleNumber, companyId });
-  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([main, subtitle, ...descriptionLines, unitsPerBox]);
+  // Het aantal staat in een eigen, niet-krimpend vak (zie .sticker-box-main-count):
+  // dat blijft altijd zichtbaar, ook als de omschrijving zo lang is dat shrink-to-fit
+  // z'n minimum bereikt en de rest van de tekst afgekapt wordt.
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([main, subtitle, ...descriptionLines]);
   return (
     <div className="sticker-box sticker-box-main">
-      <div ref={containerRef} className="sticker-box-inner">
-        <div className="sticker-line sticker-article-number sticker-emphasis" style={{ fontSize: `${40 * scale}pt` }}>{main}</div>
-        {subtitle && (
-          <div className="sticker-line" style={{ fontSize: `${32 * scale}pt` }}>{subtitle}</div>
-        )}
-        {descriptionLines.map((line, i) => (
-          <div key={i} className="sticker-line" style={{ fontSize: `${30 * scale}pt` }}>{line}</div>
-        ))}
-        <div className="sticker-line sticker-emphasis sticker-count-line" style={{ fontSize: `${34 * scale}pt` }}>({unitsPerBox} st)</div>
+      <div className="sticker-box-main-content">
+        <div ref={containerRef} className="sticker-box-inner">
+          <div className="sticker-line sticker-article-number sticker-emphasis" style={{ fontSize: `${40 * scale}pt` }}>{main}</div>
+          {subtitle && (
+            <div className="sticker-line" style={{ fontSize: `${32 * scale}pt` }}>{subtitle}</div>
+          )}
+          {descriptionLines.map((line, i) => (
+            <div key={i} className="sticker-line" style={{ fontSize: `${30 * scale}pt` }}>{line}</div>
+          ))}
+        </div>
+      </div>
+      <div className="sticker-box-main-count">
+        <div className="sticker-line sticker-emphasis" style={{ fontSize: '34pt' }}>({unitsPerBox} st)</div>
       </div>
     </div>
   );
