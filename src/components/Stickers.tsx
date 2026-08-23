@@ -41,7 +41,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
         if (!q) return true;
         return p.articleNumber.toLowerCase().includes(q) || p.ean.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
       })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .sort((a, b) => a.articleNumber.localeCompare(b.articleNumber));
   }, [products, query]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
@@ -137,7 +137,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
       ) : (
         <>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Selecteer artikelen (nieuwste bovenaan) en genereer stickers voor de Zebra-labelprinter
+            Selecteer artikelen (alfabetisch gesorteerd) en genereer stickers voor de Zebra-labelprinter
             (150 × 100&nbsp;mm).
           </p>
 
