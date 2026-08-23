@@ -20,7 +20,7 @@ export function Barcodes({ products, companies }: Props) {
         if (!q) return true;
         return p.articleNumber.toLowerCase().includes(q) || p.ean.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
       })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .sort((a, b) => a.articleNumber.localeCompare(b.articleNumber));
   }, [products, query]);
 
   const selectedCount = Object.keys(selected).length;
@@ -57,7 +57,7 @@ export function Barcodes({ products, companies }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Selecteer artikelen (nieuwste bovenaan) en genereer werkende barcodes op basis van de EAN-code, voor de
+        Selecteer artikelen (alfabetisch gesorteerd) en genereer werkende barcodes op basis van de EAN-code, voor de
         Zebra-labelprinter (150 × 100&nbsp;mm).
       </p>
 
