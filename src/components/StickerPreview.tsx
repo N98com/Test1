@@ -20,6 +20,48 @@ interface Props {
   onPrint?: () => void;
 }
 
+// Artikelnummer, omschrijving en aantal krijgen elk hun eigen shrink-to-fit-
+// berekening (en hun eigen vaste hoogte, zie .sticker-title/desc/count-group),
+// zodat ze niet dezelfde schaalfactor delen: een lang artikelnummer dat moet
+// krimpen laat de omschrijving en het aantal daardoor niet onnodig ook krimpen.
+function StickerTitleGroup({ main, subtitle }: { main: string; subtitle: string | null }) {
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([main, subtitle]);
+  return (
+    <div className="sticker-title-group">
+      <div ref={containerRef} className="sticker-box-inner">
+        <div className="sticker-line sticker-emphasis" style={{ fontSize: `${40 * scale}pt`, whiteSpace: 'nowrap' }}>{main}</div>
+        {subtitle && (
+          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt`, whiteSpace: 'nowrap' }}>{subtitle}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StickerDescGroup({ lines }: { lines: string[] }) {
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>(lines);
+  return (
+    <div className="sticker-desc-group">
+      <div ref={containerRef} className="sticker-box-inner">
+        {lines.map((line, i) => (
+          <div key={i} className="sticker-line" style={{ fontSize: `${22 * scale}pt`, whiteSpace: 'nowrap' }}>{line}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StickerCountGroup({ unitsPerBox }: { unitsPerBox: number }) {
+  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([unitsPerBox]);
+  return (
+    <div className="sticker-count-group">
+      <div ref={containerRef} className="sticker-box-inner">
+        <div className="sticker-line sticker-emphasis" style={{ fontSize: `${34 * scale}pt`, whiteSpace: 'nowrap' }}>({unitsPerBox} st)</div>
+      </div>
+    </div>
+  );
+}
+
 function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: { articleNumber: string; description: string; unitsPerBox: number; companyId: string }) {
   const { main, subtitle } = articleNumberLines(articleNumber);
   // Maximaal twee regels: producttype, en watt/kelvin/kleur op de tweede
@@ -27,19 +69,11 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
   // uitgehaald in stickerDescriptionLines, zodat de sticker altijd overzichtelijk
   // blijft, ook bij een oorspronkelijk veel te lange omschrijving.
   const descriptionLines = stickerDescriptionLines(description, { articleNumber, companyId });
-  const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([main, subtitle, ...descriptionLines, unitsPerBox]);
   return (
     <div className="sticker-box sticker-box-main">
-      <div ref={containerRef} className="sticker-box-inner">
-        <div className="sticker-line sticker-emphasis" style={{ fontSize: `${40 * scale}pt`, whiteSpace: 'nowrap' }}>{main}</div>
-        {subtitle && (
-          <div className="sticker-line" style={{ fontSize: `${28 * scale}pt`, whiteSpace: 'nowrap' }}>{subtitle}</div>
-        )}
-        {descriptionLines.map((line, i) => (
-          <div key={i} className="sticker-line" style={{ fontSize: `${22 * scale}pt`, whiteSpace: 'nowrap' }}>{line}</div>
-        ))}
-        <div className="sticker-line sticker-emphasis" style={{ fontSize: `${34 * scale}pt`, whiteSpace: 'nowrap' }}>({unitsPerBox} st)</div>
-      </div>
+      <StickerTitleGroup main={main} subtitle={subtitle} />
+      <StickerDescGroup lines={descriptionLines} />
+      <StickerCountGroup unitsPerBox={unitsPerBox} />
     </div>
   );
 }

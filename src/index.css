@@ -111,6 +111,28 @@ body {
 
 .sticker-box-main {
   height: 54mm;
+  display: flex;
+  flex-direction: column;
+  gap: 1mm;
+}
+
+/* Artikelnummer, omschrijving en aantal krijgen elk hun eigen vaste
+   ruimte binnen de bovenste box én hun eigen shrink-to-fit-berekening (zie
+   StickerMainBox): zo trekt een lang artikelnummer niet de omschrijving of
+   het aantal mee omlaag in lettergrootte, en andersom. */
+.sticker-title-group {
+  height: 20mm;
+  overflow: hidden;
+}
+
+.sticker-desc-group {
+  height: 15mm;
+  overflow: hidden;
+}
+
+.sticker-count-group {
+  height: 13mm;
+  overflow: hidden;
 }
 
 .sticker-box-batch {
