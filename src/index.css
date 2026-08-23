@@ -166,12 +166,6 @@ body {
   white-space: pre-wrap;
 }
 
-/* Artikelnummer mag nooit naar een tweede regel wrappen: liever verder
-   verkleinen (via shrink-to-fit) dan afbreken. */
-.sticker-article-number {
-  white-space: nowrap;
-}
-
 /* Extra dikgedrukt (zwaarder dan de standaard .sticker-line) voor de
    belangrijkste regels op een sticker: het artikelnummer (titel), de batch
    en het aantal, zodat die duidelijk blijven opvallen tussen de overige tekst. */
