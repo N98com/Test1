@@ -26,6 +26,16 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
   const [reprint, setReprint] = useState<{ print: StickerPrint; items: StickerItem[]; popup: Window } | null>(null);
   const [printError, setPrintError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const totalPages = Math.max(1, Math.ceil(prints.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -105,11 +115,35 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
                   <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">{print.batchNumber}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.includeBarcode ? 'Ja' : 'Nee'}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
-                    {print.items.map((item, i) => (
-                      <div key={i}>
-                        {item.articleNumber} <span className="text-slate-400 dark:text-slate-500">(×{item.copies})</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(print.id)}
+                      className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={`shrink-0 transition-transform ${expanded.has(print.id) ? 'rotate-90' : ''}`}
+                      >
+                        <path d="M9 6l6 6-6 6" />
+                      </svg>
+                      {print.items.length} artikel{print.items.length === 1 ? '' : 'en'}
+                    </button>
+                    {expanded.has(print.id) && (
+                      <div className="mt-2 space-y-0.5">
+                        {print.items.map((item, i) => (
+                          <div key={i}>
+                            {item.articleNumber} <span className="text-slate-400 dark:text-slate-500">(×{item.copies})</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{total}</td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
