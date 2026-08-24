@@ -42,6 +42,32 @@ export function usePrintPopupLifecycle(popup: Window, title: string, onClose: ()
     // meten na een frame vangt dat op.
     let raf = popup.requestAnimationFrame(updateScale);
 
+    // De allereerste meting van useShrinkToFit (net na het openen van het tabblad)
+    // kan te vroeg zijn: de layout van een gloednieuw popup-venster is op dat
+    // moment soms nog niet volledig "gezet" (bv. omdat het tabblad nog niet als
+    // actief/zichtbaar gerenderd wordt), waardoor tekst niet meteen passend
+    // gemaakt wordt. Voorheen loste alleen een handmatige ververs-actie dit op,
+    // omdat die toevallig via ensurePrintWindowContent een her-render forceerde.
+    // Door zelf een paar keer een her-render te forceren nadat het venster écht
+    // klaar is met renderen (dubbele rAF, plus een paar timeouts als vangnet
+    // voor tragere/achtergrond-tabbladen), krijgt useShrinkToFit gegarandeerd
+    // nieuwe metingen met de definitieve layout, zonder dat de gebruiker dit
+    // zelf hoeft te forceren.
+    const settleCleanups: Array<() => void> = [];
+    function settle() {
+      updateScale();
+      forceRerender();
+    }
+    const settleRaf1 = popup.requestAnimationFrame(() => {
+      const settleRaf2 = popup.requestAnimationFrame(settle);
+      settleCleanups.push(() => popup.cancelAnimationFrame(settleRaf2));
+    });
+    settleCleanups.push(() => popup.cancelAnimationFrame(settleRaf1));
+    for (const delay of [150, 400, 900]) {
+      const timerId = popup.setTimeout(settle, delay);
+      settleCleanups.push(() => popup.clearTimeout(timerId));
+    }
+
     const pollId = setInterval(() => {
       if (popup.closed) {
         clearInterval(pollId);
@@ -65,6 +91,7 @@ export function usePrintPopupLifecycle(popup: Window, title: string, onClose: ()
       doc.removeEventListener('keydown', handleKeyDown);
       popup.removeEventListener('resize', updateScale);
       popup.cancelAnimationFrame(raf);
+      settleCleanups.forEach((cleanup) => cleanup());
       clearInterval(pollId);
     };
   }, [popup, onClose, title]);
