@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
 import { useInventory } from './useInventory';
 import { useStickerPrints } from './useStickerPrints';
-import { useAddressLabelPrints } from './useAddressLabelPrints';
 import { useTheme } from './useTheme';
 import { LoginPage } from './components/LoginPage';
 import { SearchView } from './components/SearchView';
@@ -127,7 +126,6 @@ function AuthenticatedApp({
     removeStockQuantity,
   } = useInventory(isAdmin);
   const { prints: stickerPrints, loading: stickerPrintsLoading, recordPrint } = useStickerPrints(isAdmin);
-  const { prints: addressLabelPrints, loading: addressLabelPrintsLoading, recordPrint: recordAddressLabelPrint } = useAddressLabelPrints(isAdmin);
 
   const tabs: { id: Tab; label: string }[] = [
     ...(SHOW_OVERVIEW_TAB ? [{ id: 'overview' as Tab, label: 'Overzicht & zoeken' }] : []),
@@ -235,14 +233,7 @@ function AuthenticatedApp({
                   printsLoading={stickerPrintsLoading}
                 />
               )}
-              {tab === 'addressLabel' && (
-                <AddressLabel
-                  isAdmin={isAdmin}
-                  prints={addressLabelPrints}
-                  printsLoading={addressLabelPrintsLoading}
-                  onRecordPrint={recordAddressLabelPrint}
-                />
-              )}
+              {tab === 'addressLabel' && <AddressLabel />}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
               {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
             </>

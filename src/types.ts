@@ -61,20 +61,6 @@ export interface StickerPrint {
   items: StickerPrintItem[];
 }
 
-export interface AddressLabelPrint {
-  id: string;
-  printNumber: number;
-  name: string;
-  street: string;
-  houseNumber: string;
-  postcode: string;
-  city: string;
-  province: string;
-  country: string;
-  createdAt: string;
-  createdByEmail: string | null;
-}
-
 export type Role = 'admin' | 'user';
 
 export interface Profile {
