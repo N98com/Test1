@@ -138,9 +138,36 @@ function extractStickerFacts(description: string, options: { includeWatt: boolea
   return { type, watt: options.includeWatt ? watt : '', kelvin, color };
 }
 
+// Verdeelt tokens (los te breken type-woorden, plus watt/kelvin/kleur samen
+// als één vast blok) zo gelijkmatig mogelijk over twee regels, i.p.v. altijd
+// "hele type op regel 1, hele spec op regel 2": bij een lang type en een
+// korte (of lege) spec zou dat één overvolle en één bijna lege regel geven,
+// wat de tekst onnodig klein maakt terwijl de tweede regel amper gebruikt
+// wordt. Door het omslagpunt te kiezen dat de regellengtes het dichtst bij
+// elkaar brengt, past dezelfde tekst op minder brede regels en kan-ie dus
+// groter (leesbaarder) afgedrukt worden.
+function balanceTwoLines(tokens: string[]): string[] {
+  if (tokens.length <= 1) return tokens;
+
+  let bestSplit = 1;
+  let bestDiff = Infinity;
+  for (let i = 1; i < tokens.length; i += 1) {
+    const line1 = tokens.slice(0, i).join(' ');
+    const line2 = tokens.slice(i).join(' ');
+    const diff = Math.abs(line1.length - line2.length);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestSplit = i;
+    }
+  }
+  return [tokens.slice(0, bestSplit).join(' '), tokens.slice(bestSplit).join(' ')];
+}
+
 function factsToLines(facts: StickerFacts): string[] {
   const specLine = [facts.watt, facts.kelvin, facts.color].filter(Boolean).join(' ');
-  return [facts.type, specLine].filter(Boolean);
+  const typeWords = facts.type.split(/\s+/).filter(Boolean);
+  const tokens = specLine ? [...typeWords, specLine] : typeWords;
+  return balanceTwoLines(tokens);
 }
 
 // Elk artikel toont voortaan alleen het producttype en de kernspecs (watt,
