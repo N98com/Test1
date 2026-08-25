@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
+import { useIdleLogout } from './useIdleLogout';
 import { useInventory } from './useInventory';
 import { useStickerPrints } from './useStickerPrints';
 import { useTheme } from './useTheme';
@@ -247,6 +248,7 @@ function AuthenticatedApp({
 function App() {
   const { user, profile, loading, error, signIn, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  useIdleLogout(signOut, !!user);
 
   if (loading) return <LoadingScreen />;
   if (!user || !profile) return <LoginPage onSignIn={signIn} error={error} />;
