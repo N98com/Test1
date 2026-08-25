@@ -25,9 +25,21 @@ const SHOW_OVERVIEW_TAB = false;
 const SHOW_INTAKE_TAB = false;
 const SHOW_OUTTAKE_TAB = false;
 const SHOW_WAREHOUSES_TAB = false;
+// Accounts staat bewust nooit in de tabbalk: dat scherm is alleen bereikbaar via
+// "Accounts beheren" in het instellingenmenu (zie SettingsMenu), niet als eigen tab.
 const SHOW_ACCOUNTS_TAB = false;
 
-function SettingsMenu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onToggleTheme: () => void }) {
+function SettingsMenu({
+  theme,
+  onToggleTheme,
+  isAdmin,
+  onOpenAccounts,
+}: {
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+  isAdmin: boolean;
+  onOpenAccounts: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +98,28 @@ function SettingsMenu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTog
               )}
             </button>
           </div>
+
+          {isAdmin && (
+            <>
+              <hr className="my-3 border-slate-200 dark:border-slate-700" />
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenAccounts();
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Accounts beheren
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -157,7 +191,7 @@ function AuthenticatedApp({
               <p className="max-w-[9rem] truncate font-medium text-slate-700 sm:max-w-none dark:text-slate-300">{profile.email}</p>
               <p>{isAdmin ? 'Admin' : 'Gebruiker'}</p>
             </div>
-            <SettingsMenu theme={theme} onToggleTheme={toggleTheme} />
+            <SettingsMenu theme={theme} onToggleTheme={toggleTheme} isAdmin={isAdmin} onOpenAccounts={() => setTab('accounts')} />
             <button
               type="button"
               onClick={onSignOut}
@@ -236,7 +270,12 @@ function AuthenticatedApp({
               )}
               {tab === 'addressLabel' && <AddressLabel />}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
-              {tab === 'accounts' && isAdmin && <AccountsAdmin currentUserId={profile.id} />}
+              {tab === 'accounts' && isAdmin && (
+                <>
+                  <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Accounts beheren</h2>
+                  <AccountsAdmin currentUserId={profile.id} />
+                </>
+              )}
             </>
           )}
         </div>
