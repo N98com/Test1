@@ -10,6 +10,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Waar de uitnodigingslink in de e-mail naartoe moet linken. Zonder dit expliciet mee te
+// geven gebruikt Supabase de "Site URL" uit de projectinstellingen (Authentication -> URL
+// Configuration), die op een vers project standaard op localhost staat - de link in de
+// e-mail zou dan bij de ontvanger nergens naartoe wijzen. Pas dit aan als de app op een
+// ander adres komt te staan (en zet dat adres ook in de Redirect URLs-allowlist in
+// Supabase, anders wordt deze redirect genegeerd).
+const SITE_URL = 'https://n98com.github.io/Test1/';
+
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -64,7 +72,9 @@ Deno.serve(async (req) => {
     // alleen voor de twee acties hieronder.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo: SITE_URL,
+    });
     if (inviteError || !invited.user) {
       return json({ error: inviteError?.message ?? 'Uitnodigen is mislukt.' }, 400);
     }

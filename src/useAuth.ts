@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabaseClient';
+import { initialAuthRedirectType } from './lib/authRedirectType';
 import type { Profile } from './types';
 
 interface ProfileRow {
@@ -19,6 +20,11 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Een net binnengekomen uitnodigingslink logt de gebruiker meteen in, maar die heeft
+  // dan nog nooit zelf een wachtwoord gekozen: in dat geval eerst het wachtwoord-
+  // instelscherm tonen in plaats van meteen de app.
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(initialAuthRedirectType === 'invite');
+  const [passwordSetupError, setPasswordSetupError] = useState<string | null>(null);
   const knownUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -95,5 +101,26 @@ export function useAuth() {
     await supabase.auth.signOut();
   }
 
-  return { user, profile, loading, error, signIn, signOut };
+  async function completePasswordSetup(password: string) {
+    setPasswordSetupError(null);
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    if (updateError) {
+      setPasswordSetupError(updateError.message);
+      return false;
+    }
+    setNeedsPasswordSetup(false);
+    return true;
+  }
+
+  return {
+    user,
+    profile,
+    loading,
+    error,
+    signIn,
+    signOut,
+    needsPasswordSetup,
+    passwordSetupError,
+    completePasswordSetup,
+  };
 }

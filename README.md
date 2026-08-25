@@ -84,6 +84,19 @@ kun je een account ook handmatig aanmaken via Dashboard → Authentication → U
 "Invite user"; die krijgt automatisch rol "Gebruiker", aan te passen in het
 Accounts-scherm.
 
+**Let op — vereist ook Site URL / Redirect URLs:** de link in de uitnodigingsmail werkt
+alleen als Supabase weet naar welk adres 'ie moet linken. Ga naar Dashboard →
+**Authentication** → **URL Configuration** en zet:
+- **Site URL**: `https://n98com.github.io/Test1/`
+- **Redirect URLs**: voeg hetzelfde adres toe aan de lijst (anders wordt de redirect
+  genegeerd, ook al staat de Site URL goed)
+
+Zonder deze twee staat de Site URL nog op de Supabase-standaardwaarde (`localhost`), en
+komt de ontvanger van de uitnodiging op een link terecht die niet geopend kan worden.
+Draai je de app op een ander adres (eigen domein, andere GitHub Pages-locatie)? Pas dan
+ook `SITE_URL` bovenin `supabase/functions/create-account/index.ts` aan en deploy de
+functie opnieuw.
+
 6. Zet de Edge Function `fetch-product` live (nodig voor "Artikel toevoegen via link" in
    het Producten-scherm):
    - Dashboard → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"**

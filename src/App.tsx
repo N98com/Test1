@@ -5,6 +5,7 @@ import { useInventory } from './useInventory';
 import { useStickerPrints } from './useStickerPrints';
 import { useTheme } from './useTheme';
 import { LoginPage } from './components/LoginPage';
+import { SetPasswordPage } from './components/SetPasswordPage';
 import { SearchView } from './components/SearchView';
 import { IntakeForm } from './components/IntakeForm';
 import { OutakeForm } from './components/OutakeForm';
@@ -285,12 +286,26 @@ function AuthenticatedApp({
 }
 
 function App() {
-  const { user, profile, loading, error, signIn, signOut } = useAuth();
+  const {
+    user,
+    profile,
+    loading,
+    error,
+    signIn,
+    signOut,
+    needsPasswordSetup,
+    passwordSetupError,
+    completePasswordSetup,
+  } = useAuth();
   const { theme, toggleTheme } = useTheme();
   useIdleLogout(signOut, !!user);
 
   if (loading) return <LoadingScreen />;
-  if (!user || !profile) return <LoginPage onSignIn={signIn} error={error} />;
+  if (!user) return <LoginPage onSignIn={signIn} error={error} />;
+  if (needsPasswordSetup) {
+    return <SetPasswordPage email={user.email ?? ''} error={passwordSetupError} onSetPassword={completePasswordSetup} />;
+  }
+  if (!profile) return <LoginPage onSignIn={signIn} error={error} />;
 
   return <AuthenticatedApp profile={profile} onSignOut={signOut} theme={theme} toggleTheme={toggleTheme} />;
 }

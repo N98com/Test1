@@ -1,6 +1,9 @@
 import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+// Moet hier (synchroon, vóór de lazy App-import hieronder) geïmporteerd worden zodat de
+// uitnodigings-hash uit de URL gelezen is vóórdat Supabase 'm zelf verwerkt en wist.
+import './lib/authRedirectType'
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
