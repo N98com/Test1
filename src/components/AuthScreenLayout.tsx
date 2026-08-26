@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import loginBg from '../assets/login-bg.svg';
 
 export function AppLogo() {
   return (
@@ -20,15 +19,11 @@ export function AppLogo() {
 }
 
 // Gedeelde omlijsting voor de twee "buiten de app"-schermen (inloggen, wachtwoord
-// instellen na een uitnodiging): donkere achtergrondafbeelding op het volledige scherm
-// met het logo boven de kaart, zodat beide schermen er hetzelfde uitzien.
+// instellen na een uitnodiging), zodat beide schermen er hetzelfde uitzien.
 export function AuthScreenLayout({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center bg-slate-950 bg-cover bg-center px-4"
-      style={{ backgroundImage: `url(${loginBg})` }}
-    >
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
+      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <AppLogo />
         {children}
       </div>
