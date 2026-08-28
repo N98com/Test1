@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Company, Product } from '../types';
 import { CompanyBadge } from './CompanyBadge';
-import { parsePakbonText, type PakbonLineMatch } from '../lib/pakbonParse';
+import { parsePakbonText, matchProductsByArticleNumber, type PakbonLineMatch } from '../lib/pakbonParse';
 import type { PakbonOcrProgress } from '../lib/pakbonOcr';
 
 interface Props {
@@ -11,8 +11,8 @@ interface Props {
 }
 
 interface ReviewRow {
-  ean: string;
-  product: Product | null;
+  key: string;
+  product: Product;
   aantal: number;
 }
 
@@ -42,17 +42,28 @@ export function PakbonUpload({ products, companies, onApply }: Props) {
     try {
       const { extractPakbonText } = await import('../lib/pakbonOcr');
       const text = await extractPakbonText(file, setProgress);
-      const found = parsePakbonText(text);
 
+      // Niet elke pakbon heeft EAN's - sommige leveranciers gebruiken alleen hun eigen
+      // model-/artikelnummer. Probeer daarom eerst op EAN te matchen, en zoek voor de
+      // artikelen die daar niet uit kwamen alsnog op artikelnummer.
+      const eanFound = parsePakbonText(text);
       const matched: ReviewRow[] = [];
+      const matchedProductIds = new Set<string>();
       const notFound: PakbonLineMatch[] = [];
-      for (const line of found) {
-        const product = products.find((p) => p.ean.trim() === line.ean) ?? null;
+      for (const line of eanFound) {
+        const product = products.find((p) => p.ean.trim() === line.ean);
         if (product) {
-          matched.push({ ean: line.ean, product, aantal: line.aantal });
+          matched.push({ key: product.id, product, aantal: line.aantal });
+          matchedProductIds.add(product.id);
         } else {
           notFound.push(line);
         }
+      }
+
+      const remainingProducts = products.filter((p) => !matchedProductIds.has(p.id));
+      const articleMatches = matchProductsByArticleNumber(text, remainingProducts);
+      for (const m of articleMatches) {
+        matched.push({ key: m.product.id, product: m.product, aantal: m.aantal });
       }
 
       setRows(matched);
@@ -87,7 +98,7 @@ export function PakbonUpload({ products, companies, onApply }: Props) {
   }
 
   function handleApply() {
-    onApply(rows.filter((r) => r.product).map((r) => ({ productId: r.product!.id, copies: r.aantal })));
+    onApply(rows.map((r) => ({ productId: r.product.id, copies: r.aantal })));
   }
 
   const progressLabel = progress ? (STATUS_LABELS[progress.status] ?? progress.status) : null;
@@ -96,9 +107,9 @@ export function PakbonUpload({ products, companies, onApply }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Upload een foto of PDF van een pakbon van binnengekomen goederen. De EAN-nummers en aantallen worden er
-        automatisch uit gelezen (herkenning gebeurt volledig in je browser) en gematcht met je artikelen, zodat je
-        de juiste stickers in de juiste aantallen klaar kunt zetten.
+        Upload een foto of PDF van een pakbon van binnengekomen goederen. EAN-nummers en/of artikelnummers met hun
+        aantal dozen worden er automatisch uit gelezen (herkenning gebeurt volledig in je browser) en gematcht met
+        je artikelen, zodat je de juiste stickers in de juiste aantallen klaar kunt zetten.
       </p>
 
       {status === 'idle' && (
@@ -145,7 +156,8 @@ export function PakbonUpload({ products, companies, onApply }: Props) {
         <div className="space-y-4">
           {rows.length === 0 && unmatched.length === 0 && (
             <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              Geen EAN-nummers herkend op deze pakbon. Probeer een scherpere/rechtere foto, of een PDF.
+              Geen EAN-nummers of artikelnummers herkend op deze pakbon. Probeer een scherpere/rechtere foto, of een
+              PDF.
             </p>
           )}
 
@@ -163,13 +175,13 @@ export function PakbonUpload({ products, companies, onApply }: Props) {
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
                   {rows.map((row, i) => (
-                    <tr key={`${row.ean}-${i}`}>
-                      <td className="px-3 py-2 font-medium text-slate-900 dark:text-slate-100">{row.product!.articleNumber}</td>
-                      <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{row.product!.description}</td>
+                    <tr key={row.key}>
+                      <td className="px-3 py-2 font-medium text-slate-900 dark:text-slate-100">{row.product.articleNumber}</td>
+                      <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{row.product.description}</td>
                       <td className="px-3 py-2">
                         <CompanyBadge
-                          companyId={row.product!.companyId}
-                          name={companies.find((c) => c.id === row.product!.companyId)?.name ?? '—'}
+                          companyId={row.product.companyId}
+                          name={companies.find((c) => c.id === row.product.companyId)?.name ?? '—'}
                         />
                       </td>
                       <td className="px-3 py-2 text-right">
