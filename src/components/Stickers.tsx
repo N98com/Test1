@@ -5,7 +5,6 @@ import { CompanyBadge } from './CompanyBadge';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
 import { StickerPreview, type StickerItem } from './StickerPreview';
 import { StickerHistoryView } from './StickerHistoryView';
-import { PakbonUpload } from './PakbonUpload';
 import type { RecordPrintInput } from '../useStickerPrints';
 import { openPrintWindow } from '../lib/printWindow';
 import { Pagination } from './Pagination';
@@ -21,7 +20,7 @@ interface Props {
 }
 
 export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, printsLoading }: Props) {
-  const [view, setView] = useState<'generate' | 'pakbon' | 'history'>('generate');
+  const [view, setView] = useState<'generate' | 'history'>('generate');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Record<string, number>>({});
@@ -66,17 +65,6 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
 
   function setCopies(productId: string, copies: number) {
     setSelected((prev) => ({ ...prev, [productId]: Math.max(1, copies) }));
-  }
-
-  function applyPakbonMatches(matches: { productId: string; copies: number }[]) {
-    setSelected((prev) => {
-      const next = { ...prev };
-      for (const match of matches) {
-        next[match.productId] = match.copies;
-      }
-      return next;
-    });
-    setView('generate');
   }
 
   function handleGenerate() {
@@ -132,17 +120,6 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
           </button>
           <button
             type="button"
-            onClick={() => setView('pakbon')}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              view === 'pakbon'
-                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100'
-            }`}
-          >
-            Upload Pakbon
-          </button>
-          <button
-            type="button"
             onClick={() => setView('history')}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               view === 'history'
@@ -156,8 +133,6 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
       )}
 
       {view === 'history' && <StickerHistoryView prints={prints} loading={printsLoading} onRecordPrint={onRecordPrint} />}
-
-      {view === 'pakbon' && <PakbonUpload products={products} companies={companies} onApply={applyPakbonMatches} />}
 
       {view === 'generate' && (
         <>
