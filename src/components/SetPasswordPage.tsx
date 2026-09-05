@@ -33,7 +33,7 @@ export function SetPasswordPage({ email, error, onSetPassword }: Props) {
 
   return (
     <AuthScreenLayout>
-      <h1 className="text-center text-lg font-bold text-slate-900 dark:text-slate-100">Welkom bij Productbeheer</h1>
+      <h1 className="text-center text-lg font-bold text-slate-900 dark:text-slate-100">Welkom bij Label Generator</h1>
       <p className="mb-6 text-center text-sm text-slate-500 dark:text-slate-400">
         Stel een wachtwoord in voor <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span> om je
         account te activeren.

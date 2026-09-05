@@ -1,4 +1,4 @@
-# Voorraadbeheer — LISL & EB
+# Sticker Generator — LISL & EB
 
 Interface om voorraad van beide bedrijven over 4 magazijnen bij te houden, achter een
 inlogscherm met twee rollen (Admin/Gebruiker).
