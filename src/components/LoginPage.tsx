@@ -20,7 +20,7 @@ export function LoginPage({ onSignIn, error }: Props) {
 
   return (
     <AuthScreenLayout>
-      <h1 className="text-center text-lg font-bold text-slate-900 dark:text-slate-100">Productbeheer</h1>
+      <h1 className="text-center text-lg font-bold text-slate-900 dark:text-slate-100">Label Generator</h1>
       <p className="mb-6 text-center text-sm text-slate-500 dark:text-slate-400">Log in met je account om verder te gaan.</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
