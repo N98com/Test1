@@ -147,7 +147,7 @@ function AuthenticatedApp({
   toggleTheme: () => void;
 }) {
   const isAdmin = profile.role === 'admin';
-  const [tab, setTab] = useState<Tab>('products');
+  const [tab, setTab] = useState<Tab>('stickers');
   const {
     companies,
     warehouses,
@@ -168,9 +168,9 @@ function AuthenticatedApp({
     ...(SHOW_INTAKE_TAB ? [{ id: 'intake' as Tab, label: 'Inboeken' }] : []),
     ...(SHOW_OUTTAKE_TAB ? [{ id: 'outtake' as Tab, label: 'Uitboeken' }] : []),
     ...(SHOW_WAREHOUSES_TAB ? [{ id: 'warehouses' as Tab, label: 'Voorraad' }] : []),
-    { id: 'products', label: 'Producten' },
     { id: 'stickers', label: 'Stickers' },
     { id: 'addressLabel', label: 'Brief label' },
+    { id: 'products', label: 'Producten' },
     { id: 'barcodes', label: 'Barcode generator' },
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
