@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 
-const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const;
 // Niet bij elke losse mousemove de timer resetten (die vuurt tientallen keren
 // per seconde) — dat is nodeloos werk voor exact hetzelfde resultaat.
 const THROTTLE_MS = 1000;
 
-// Logt de gebruiker automatisch uit na 2 uur zonder muis-/toetsenbord-/scroll-
+// Logt de gebruiker automatisch uit na 8 uur zonder muis-/toetsenbord-/scroll-
 // activiteit in dit tabblad.
 export function useIdleLogout(onTimeout: () => void, enabled: boolean) {
   const onTimeoutRef = useRef(onTimeout);
