@@ -34,6 +34,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<Role>('user');
   const [creating, setCreating] = useState(false);
   const [createFeedback, setCreateFeedback] = useState<Feedback | null>(null);
@@ -86,10 +87,14 @@ export function AccountsAdmin({ currentUserId }: Props) {
       setCreateFeedback({ text: 'Vul een geldig e-mailadres in.', type: 'error' });
       return;
     }
+    if (newPassword && newPassword.length < 6) {
+      setCreateFeedback({ text: 'Wachtwoord moet minimaal 6 tekens zijn.', type: 'error' });
+      return;
+    }
 
     setCreating(true);
     const { data, error: invokeError } = await supabase.functions.invoke('create-account', {
-      body: { email, role: newRole },
+      body: { email, role: newRole, password: newPassword || undefined },
     });
     setCreating(false);
 
@@ -98,8 +103,12 @@ export function AccountsAdmin({ currentUserId }: Props) {
       return;
     }
 
-    setCreateFeedback({ text: `Uitnodiging verstuurd naar ${email}.`, type: 'success' });
+    setCreateFeedback({
+      text: newPassword ? `Account ${email} aangemaakt, kan direct inloggen.` : `Uitnodiging verstuurd naar ${email}.`,
+      type: 'success',
+    });
     setNewEmail('');
+    setNewPassword('');
     setNewRole('user');
     fetchProfiles();
   }
@@ -108,7 +117,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
     <div className="space-y-4">
       <form onSubmit={handleCreate} className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
         <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Nieuw account toevoegen</h3>
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
           <Field label="E-mailadres">
             <input
               type="email"
@@ -117,6 +126,16 @@ export function AccountsAdmin({ currentUserId }: Props) {
               className="input"
               placeholder="collega@bedrijf.nl"
               required
+            />
+          </Field>
+          <Field label="Wachtwoord (optioneel)">
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="input"
+              placeholder="Min. 6 tekens"
+              autoComplete="new-password"
             />
           </Field>
           <Field label="Rol">
@@ -134,7 +153,8 @@ export function AccountsAdmin({ currentUserId }: Props) {
           </button>
         </div>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          De nieuwe collega krijgt een e-mail om zelf een wachtwoord in te stellen.
+          Met een wachtwoord kan de nieuwe collega direct inloggen. Laat je het leeg, dan krijgt die een
+          e-mail om zelf een wachtwoord in te stellen.
         </p>
         {createFeedback && (
           <p className={`mt-3 rounded-md px-3 py-2 text-sm ${createFeedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>

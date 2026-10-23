@@ -1,7 +1,8 @@
 // Edge Function: create-account
-// Laat een ingelogde Admin een nieuw account uitnodigen (via e-mail) en
-// direct een rol toewijzen. Gebruikt de service-role sleutel, die alleen
-// hier server-side bestaat en nooit naar de browser gaat.
+// Laat een ingelogde Admin een nieuw account aanmaken (direct met wachtwoord,
+// of via een uitnodigingsmail) en direct een rol toewijzen. Gebruikt de
+// service-role sleutel, die alleen hier server-side bestaat en nooit naar de
+// browser gaat.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -63,29 +64,35 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
     const role = body?.role === 'admin' ? 'admin' : 'user';
+    // Optioneel: met een wachtwoord wordt het account direct aangemaakt (en
+    // bevestigd), zonder wachtwoord wordt een uitnodigingsmail verstuurd.
+    const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !email.includes('@')) {
       return json({ error: 'Vul een geldig e-mailadres in.' }, 400);
+    }
+    if (password && password.length < 6) {
+      return json({ error: 'Wachtwoord moet minimaal 6 tekens zijn.' }, 400);
     }
 
     // Deze client heeft volledige rechten (service role) en omzeilt RLS bewust,
     // alleen voor de twee acties hieronder.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: SITE_URL,
-    });
-    if (inviteError || !invited.user) {
-      return json({ error: inviteError?.message ?? 'Uitnodigen is mislukt.' }, 400);
+    const { data: created, error: createError } = password
+      ? await adminClient.auth.admin.createUser({ email, password, email_confirm: true })
+      : await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: SITE_URL });
+    if (createError || !created.user) {
+      return json({ error: createError?.message ?? 'Aanmaken is mislukt.' }, 400);
     }
 
     if (role === 'admin') {
       const { error: roleError } = await adminClient
         .from('profiles')
         .update({ role: 'admin' })
-        .eq('id', invited.user.id);
+        .eq('id', created.user.id);
       if (roleError) {
-        return json({ error: `Account uitgenodigd, maar rol instellen mislukte: ${roleError.message}` }, 500);
+        return json({ error: `Account aangemaakt, maar rol instellen mislukte: ${roleError.message}` }, 500);
       }
     }
 
