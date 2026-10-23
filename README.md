@@ -49,6 +49,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   account dat de mutatie heeft uitgevoerd.
 - **Accounts** (Admin): nieuwe accounts aanmaken met wachtwoord en rol, plus een
   overzicht van alle accounts met een dropdown om de rol te wijzigen.
+- **Mijn account** (iedereen, via het instellingen-icoon): eigen e-mailadres en
+  wachtwoord wijzigen, na invoer van het huidige wachtwoord.
 
 De interface is responsive (tabnavigatie en tabellen scrollen binnen hun eigen kader op
 smalle schermen) en heeft een licht/donker thema-schakelaar rechtsboven in de header.
@@ -84,7 +86,11 @@ kun je een account ook handmatig aanmaken via Dashboard → Authentication → U
 "Add user" (met "Auto Confirm User" aangevinkt); die krijgt automatisch rol
 "Gebruiker", aan te passen in het Accounts-scherm.
 
-6. Zet de Edge Function `fetch-product` live (nodig voor "Artikel toevoegen via link" in
+6. Zet op dezelfde manier de Edge Function `update-account` live (nodig voor
+   "Mijn account" in het instellingenmenu): naam `update-account`, inhoud van
+   `supabase/functions/update-account/index.ts`. Geen extra secrets nodig.
+
+7. Zet de Edge Function `fetch-product` live (nodig voor "Artikel toevoegen via link" in
    het Producten-scherm):
    - Dashboard → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"**
    - Naam: `fetch-product`

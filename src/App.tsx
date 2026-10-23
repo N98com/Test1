@@ -15,6 +15,7 @@ import { Stickers } from './components/Stickers';
 import { AddressLabel } from './components/AddressLabel';
 import { Barcodes } from './components/Barcodes';
 import { AccountsAdmin } from './components/AccountsAdmin';
+import { AccountSettingsDialog } from './components/AccountSettingsDialog';
 import type { Profile } from './types';
 
 type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'addressLabel' | 'barcodes' | 'accounts';
@@ -35,11 +36,13 @@ function SettingsMenu({
   onToggleTheme,
   isAdmin,
   onOpenAccounts,
+  onOpenAccountSettings,
 }: {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   isAdmin: boolean;
   onOpenAccounts: () => void;
+  onOpenAccountSettings: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,9 +103,24 @@ function SettingsMenu({
             </button>
           </div>
 
+          <hr className="my-3 border-slate-200 dark:border-slate-700" />
+          <button
+            type="button"
+            onClick={() => {
+              onOpenAccountSettings();
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            Mijn account
+          </button>
+
           {isAdmin && (
             <>
-              <hr className="my-3 border-slate-200 dark:border-slate-700" />
               <button
                 type="button"
                 onClick={() => {
@@ -148,6 +166,7 @@ function AuthenticatedApp({
 }) {
   const isAdmin = profile.role === 'admin';
   const [tab, setTab] = useState<Tab>('stickers');
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const {
     companies,
     warehouses,
@@ -192,7 +211,13 @@ function AuthenticatedApp({
               <p className="max-w-[9rem] truncate font-medium text-slate-700 sm:max-w-none dark:text-slate-300">{profile.email}</p>
               <p>{isAdmin ? 'Admin' : 'Gebruiker'}</p>
             </div>
-            <SettingsMenu theme={theme} onToggleTheme={toggleTheme} isAdmin={isAdmin} onOpenAccounts={() => setTab('accounts')} />
+            <SettingsMenu
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              isAdmin={isAdmin}
+              onOpenAccounts={() => setTab('accounts')}
+              onOpenAccountSettings={() => setAccountSettingsOpen(true)}
+            />
             <button
               type="button"
               onClick={onSignOut}
@@ -281,6 +306,10 @@ function AuthenticatedApp({
           )}
         </div>
       </main>
+
+      {accountSettingsOpen && (
+        <AccountSettingsDialog email={profile.email} onClose={() => setAccountSettingsOpen(false)} />
+      )}
     </div>
   );
 }
