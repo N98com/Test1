@@ -87,14 +87,14 @@ export function AccountsAdmin({ currentUserId }: Props) {
       setCreateFeedback({ text: 'Vul een geldig e-mailadres in.', type: 'error' });
       return;
     }
-    if (newPassword && newPassword.length < 6) {
+    if (newPassword.length < 6) {
       setCreateFeedback({ text: 'Wachtwoord moet minimaal 6 tekens zijn.', type: 'error' });
       return;
     }
 
     setCreating(true);
     const { data, error: invokeError } = await supabase.functions.invoke('create-account', {
-      body: { email, role: newRole, password: newPassword || undefined },
+      body: { email, role: newRole, password: newPassword },
     });
     setCreating(false);
 
@@ -103,10 +103,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
       return;
     }
 
-    setCreateFeedback({
-      text: newPassword ? `Account ${email} aangemaakt, kan direct inloggen.` : `Uitnodiging verstuurd naar ${email}.`,
-      type: 'success',
-    });
+    setCreateFeedback({ text: `Account ${email} aangemaakt, kan direct inloggen.`, type: 'success' });
     setNewEmail('');
     setNewPassword('');
     setNewRole('user');
@@ -128,7 +125,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
               required
             />
           </Field>
-          <Field label="Wachtwoord (optioneel)">
+          <Field label="Wachtwoord">
             <input
               type="password"
               value={newPassword}
@@ -136,6 +133,8 @@ export function AccountsAdmin({ currentUserId }: Props) {
               className="input"
               placeholder="Min. 6 tekens"
               autoComplete="new-password"
+              minLength={6}
+              required
             />
           </Field>
           <Field label="Rol">
@@ -153,8 +152,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
           </button>
         </div>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Met een wachtwoord kan de nieuwe collega direct inloggen. Laat je het leeg, dan krijgt die een
-          e-mail om zelf een wachtwoord in te stellen.
+          De nieuwe collega kan direct inloggen met dit wachtwoord. Geef het via een veilige weg door.
         </p>
         {createFeedback && (
           <p className={`mt-3 rounded-md px-3 py-2 text-sm ${createFeedback.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'}`}>

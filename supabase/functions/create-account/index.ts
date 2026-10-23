@@ -1,8 +1,7 @@
 // Edge Function: create-account
-// Laat een ingelogde Admin een nieuw account aanmaken (direct met wachtwoord,
-// of via een uitnodigingsmail) en direct een rol toewijzen. Gebruikt de
-// service-role sleutel, die alleen hier server-side bestaat en nooit naar de
-// browser gaat.
+// Laat een ingelogde Admin een nieuw account aanmaken met een wachtwoord en
+// direct een rol toewijzen. Gebruikt de service-role sleutel, die alleen hier
+// server-side bestaat en nooit naar de browser gaat.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -10,14 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Waar de uitnodigingslink in de e-mail naartoe moet linken. Zonder dit expliciet mee te
-// geven gebruikt Supabase de "Site URL" uit de projectinstellingen (Authentication -> URL
-// Configuration), die op een vers project standaard op localhost staat - de link in de
-// e-mail zou dan bij de ontvanger nergens naartoe wijzen. Pas dit aan als de app op een
-// ander adres komt te staan (en zet dat adres ook in de Redirect URLs-allowlist in
-// Supabase, anders wordt deze redirect genegeerd).
-const SITE_URL = 'https://n98com.github.io/Test1/';
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
@@ -64,14 +55,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
     const role = body?.role === 'admin' ? 'admin' : 'user';
-    // Optioneel: met een wachtwoord wordt het account direct aangemaakt (en
-    // bevestigd), zonder wachtwoord wordt een uitnodigingsmail verstuurd.
     const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !email.includes('@')) {
       return json({ error: 'Vul een geldig e-mailadres in.' }, 400);
     }
-    if (password && password.length < 6) {
+    if (password.length < 6) {
       return json({ error: 'Wachtwoord moet minimaal 6 tekens zijn.' }, 400);
     }
 
@@ -79,9 +68,12 @@ Deno.serve(async (req) => {
     // alleen voor de twee acties hieronder.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: created, error: createError } = password
-      ? await adminClient.auth.admin.createUser({ email, password, email_confirm: true })
-      : await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: SITE_URL });
+    // email_confirm: het account is direct bevestigd en kan meteen inloggen.
+    const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
     if (createError || !created.user) {
       return json({ error: createError?.message ?? 'Aanmaken is mislukt.' }, 400);
     }

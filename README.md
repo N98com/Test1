@@ -6,8 +6,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
 ## Functionaliteit
 
 - **Login & accounts**: de hele app zit achter een inlogscherm. Accounts worden door een
-  Admin aangemaakt via het formulier in het Accounts-scherm (stuurt een uitnodigingsmail),
-  niet via self-signup.
+  Admin aangemaakt via het formulier in het Accounts-scherm (met een wachtwoord dat de
+  Admin zelf instelt), niet via self-signup.
 - **Rollen**:
   - **Admin**: alles, inclusief artikelen aanmaken/bewerken (artikelnummer, EAN,
     omschrijving, bedrijf, doosinhoud), Historie inzien en accountrollen beheren.
@@ -47,7 +47,7 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   lettergrootte per kader krimpt automatisch mee zodat de tekst altijd past.
 - **Historie** (Admin): logboek van alle in-, uit- en correctieboekingen, inclusief het
   account dat de mutatie heeft uitgevoerd.
-- **Accounts** (Admin): nieuwe accounts uitnodigen via e-mail met een rol, plus een
+- **Accounts** (Admin): nieuwe accounts aanmaken met wachtwoord en rol, plus een
   overzicht van alle accounts met een dropdown om de rol te wijzigen.
 
 De interface is responsive (tabnavigatie en tabellen scrollen binnen hun eigen kader op
@@ -68,8 +68,8 @@ authenticatie).
    ```
 4. Kopieer de **Project URL** en **anon/publishable key** (Project Settings → API).
 5. Zet de Edge Function `create-account` live (nodig voor het "Nieuw account toevoegen"
-   formulier in het Accounts-scherm — hiermee kan een Admin zelf collega's uitnodigen
-   zonder de Supabase Dashboard te hoeven gebruiken):
+   formulier in het Accounts-scherm — hiermee kan een Admin zelf accounts voor collega's
+   aanmaken zonder de Supabase Dashboard te hoeven gebruiken):
    - Dashboard → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"**
    - Naam: `create-account`
    - Plak de inhoud van `supabase/functions/create-account/index.ts` en klik **Deploy**
@@ -81,21 +81,8 @@ authenticatie).
 Zonder deze Edge Function werkt de rest van de app gewoon door — alleen het
 "Nieuw account toevoegen"-formulier geeft dan een foutmelding. Als tijdelijk alternatief
 kun je een account ook handmatig aanmaken via Dashboard → Authentication → Users →
-"Invite user"; die krijgt automatisch rol "Gebruiker", aan te passen in het
-Accounts-scherm.
-
-**Let op — vereist ook Site URL / Redirect URLs:** de link in de uitnodigingsmail werkt
-alleen als Supabase weet naar welk adres 'ie moet linken. Ga naar Dashboard →
-**Authentication** → **URL Configuration** en zet:
-- **Site URL**: `https://n98com.github.io/Test1/`
-- **Redirect URLs**: voeg hetzelfde adres toe aan de lijst (anders wordt de redirect
-  genegeerd, ook al staat de Site URL goed)
-
-Zonder deze twee staat de Site URL nog op de Supabase-standaardwaarde (`localhost`), en
-komt de ontvanger van de uitnodiging op een link terecht die niet geopend kan worden.
-Draai je de app op een ander adres (eigen domein, andere GitHub Pages-locatie)? Pas dan
-ook `SITE_URL` bovenin `supabase/functions/create-account/index.ts` aan en deploy de
-functie opnieuw.
+"Add user" (met "Auto Confirm User" aangevinkt); die krijgt automatisch rol
+"Gebruiker", aan te passen in het Accounts-scherm.
 
 6. Zet de Edge Function `fetch-product` live (nodig voor "Artikel toevoegen via link" in
    het Producten-scherm):
