@@ -112,7 +112,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
                   <td className="px-3 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">{print.printNumber}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-300">{formatDateTime(print.createdAt)}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.createdByEmail ?? '—'}</td>
-                  <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">{print.batchNumber}</td>
+                  <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">{print.batchNumber || 'Geen batch'}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.includeBarcode ? 'Ja' : 'Nee'}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
                     <button

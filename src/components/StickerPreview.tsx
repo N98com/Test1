@@ -81,6 +81,19 @@ function StickerMainBox({ articleNumber, description, unitsPerBox, companyId }: 
 function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: string; ean: string; includeBarcode: boolean }) {
   const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([batchNumber]);
 
+  // "Geen batch": zonder barcode vervalt het onderste vak helemaal, met barcode
+  // staat alleen de barcode (gecentreerd) in het vak.
+  if (!batchNumber) {
+    if (!includeBarcode) return null;
+    return (
+      <div className="sticker-box sticker-box-batch">
+        <div className="sticker-box-inner">
+          <BarcodeSvg ean={ean} width={1.4} height={36} fontSize={13} margin={0} />
+        </div>
+      </div>
+    );
+  }
+
   if (!includeBarcode) {
     return (
       <div className="sticker-box sticker-box-batch">
@@ -122,7 +135,14 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
             {items.length} sticker{items.length === 1 ? '' : 's'} klaar om te printen
           </p>
           <p className="text-xs text-slate-500">
-            Batch: <span className="font-mono">{batchNumber}</span> · Formaat 150 × 100 mm
+            {batchNumber ? (
+              <>
+                Batch: <span className="font-mono">{batchNumber}</span>
+              </>
+            ) : (
+              'Geen batch'
+            )}{' '}
+            · Formaat 150 × 100 mm
           </p>
         </div>
         <div className="flex gap-2">

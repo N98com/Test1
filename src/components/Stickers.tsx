@@ -27,13 +27,16 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
+  const [noBatch, setNoBatch] = useState(false);
   const [includeBarcode, setIncludeBarcode] = useState(false);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
   const [printError, setPrintError] = useState<string | null>(null);
 
-  const batchNumber = formatBatch(month, year);
+  // Lege batch = "Geen batch": de sticker toont dan geen batch (zie StickerBatchBox),
+  // en in Historie wordt de print zo ook herkend.
+  const batchNumber = noBatch ? '' : formatBatch(month, year);
 
   const sorted = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -182,36 +185,48 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Batch voor deze print</h3>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Maand">
-                <select value={month} onChange={(e) => setMonth(e.target.value)} className="input">
-                  {MONTHS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Jaar">
-                <input
-                  value={year}
-                  onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                  className="input"
-                  placeholder="26"
-                  maxLength={2}
-                />
-              </Field>
-              <Field label="Batchnummer">
-                <input value={batchNumber} disabled className="input" />
-              </Field>
-            </div>
+            {!noBatch && (
+              <div className="mb-4 grid gap-4 sm:grid-cols-3">
+                <Field label="Maand">
+                  <select value={month} onChange={(e) => setMonth(e.target.value)} className="input">
+                    {MONTHS.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Jaar">
+                  <input
+                    value={year}
+                    onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    className="input"
+                    placeholder="26"
+                    maxLength={2}
+                  />
+                </Field>
+                <Field label="Batchnummer">
+                  <input value={batchNumber} disabled className="input" />
+                </Field>
+              </div>
+            )}
 
-            <label className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={noBatch}
+                onChange={(e) => setNoBatch(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Geen Batch
+            </label>
+
+            <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={includeBarcode}
                 onChange={(e) => setIncludeBarcode(e.target.checked)}
                 className="h-4 w-4"
               />
-              Barcode toevoegen op de sticker (naast de batch)
+              {noBatch ? 'Barcode toevoegen op de sticker' : 'Barcode toevoegen op de sticker (naast de batch)'}
             </label>
           </div>
 
