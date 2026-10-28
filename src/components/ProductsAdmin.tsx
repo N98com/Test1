@@ -5,7 +5,8 @@ import { Field } from './Field';
 import { Pagination } from './Pagination';
 import { PAGE_SIZE } from '../lib/pagination';
 
-const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 100, 200, 1000];
+const UNITS_PER_BOX_OPTIONS = [10, 20, 50, 80, 100, 200, 1000];
+const CUSTOM_UNITS = 'custom';
 
 // Onthoudt het laatst gebruikte bedrijf en aantal per volle doos (ook na een
 // paginaherlaad), zodat je die niet voor elk nieuw artikel opnieuw hoeft te
@@ -54,6 +55,9 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
   const [newEan, setNewEan] = useState('');
   const [newCompanyId, setNewCompanyId] = useState(() => localStorage.getItem(LAST_COMPANY_KEY) || companies[0]?.id || '');
   const [newUnitsPerBox, setNewUnitsPerBox] = useState(() => localStorage.getItem(LAST_UNITS_PER_BOX_KEY) || '50');
+  // "Anders...": zelf een aantal invullen dat niet in de lijst staat. Staat ook
+  // aan als het onthouden aantal van de vorige keer niet in de lijst voorkomt.
+  const [customUnits, setCustomUnits] = useState(() => !UNITS_PER_BOX_OPTIONS.includes(Number(newUnitsPerBox)));
   const [creating, setCreating] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
@@ -98,6 +102,11 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       setFeedback({ text: 'Vul artikelnummer, omschrijving, EAN en bedrijf in.', type: 'error' });
       return;
     }
+    const unitsPerBox = Number(newUnitsPerBox);
+    if (!Number.isInteger(unitsPerBox) || unitsPerBox < 1) {
+      setFeedback({ text: 'Vul een geldig aantal per volle doos in (heel getal, minimaal 1).', type: 'error' });
+      return;
+    }
 
     const duplicateArticle = products.some((p) => p.articleNumber.trim().toLowerCase() === articleNumber.toLowerCase());
     const duplicateEan = products.some((p) => p.ean.trim().toLowerCase() === ean.toLowerCase());
@@ -120,7 +129,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       description: newDescription.trim(),
       ean,
       companyId: newCompanyId,
-      unitsPerBox: Number(newUnitsPerBox) || 1,
+      unitsPerBox,
     });
     setCreating(false);
 
@@ -239,11 +248,40 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
               </select>
             </Field>
             <Field label="Aantal per volle doos">
-              <select value={newUnitsPerBox} onChange={(e) => setNewUnitsPerBox(e.target.value)} className="input" required>
-                {UNITS_PER_BOX_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={customUnits ? CUSTOM_UNITS : newUnitsPerBox}
+                  onChange={(e) => {
+                    if (e.target.value === CUSTOM_UNITS) {
+                      setCustomUnits(true);
+                      setNewUnitsPerBox('');
+                    } else {
+                      setCustomUnits(false);
+                      setNewUnitsPerBox(e.target.value);
+                    }
+                  }}
+                  className="input"
+                  required
+                >
+                  {UNITS_PER_BOX_OPTIONS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                  <option value={CUSTOM_UNITS}>Anders...</option>
+                </select>
+                {customUnits && (
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={newUnitsPerBox}
+                    onChange={(e) => setNewUnitsPerBox(e.target.value)}
+                    className="input"
+                    placeholder="Aantal"
+                    autoFocus
+                    required
+                  />
+                )}
+              </div>
             </Field>
           </div>
           <button

@@ -37,7 +37,8 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   ecobright.nl aangemaakt worden: titel, artikelnummer en EAN worden automatisch
   overgenomen van de pagina en het bedrijf (LISL/EB) wordt automatisch bepaald op basis
   van het domein — de velden blijven daarna gewoon bewerkbaar voordat je opslaat. Het
-  aantal per volle doos staat standaard op 50, met de keuze uit 10/20/50/100/1000.
+  aantal per volle doos staat standaard op 50, met de keuze uit 10/20/50/80/100/200/1000
+  of "Anders..." om zelf een aantal in te vullen.
   Ledinbouwspotsleds.nl heeft botbeveiliging (Anubis) die automatisch ophalen soms
   blokkeert — in dat geval verschijnt een duidelijke melding en vul je de drie velden
   handmatig in; ecobright.nl heeft die beveiliging niet.
