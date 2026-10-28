@@ -303,7 +303,9 @@ function AuthenticatedApp({
                   onDeleteProduct={deleteProduct}
                 />
               )}
-              {tab === 'stickers' && (
+              {/* Blijft altijd gemount (alleen verborgen) zodat de selectie, batch en
+                  zoekopdracht bewaard blijven bij het wisselen van tabblad. */}
+              <div hidden={tab !== 'stickers'}>
                 <Stickers
                   products={products}
                   companies={companies}
@@ -312,7 +314,7 @@ function AuthenticatedApp({
                   prints={stickerPrints}
                   printsLoading={stickerPrintsLoading}
                 />
-              )}
+              </div>
               {tab === 'addressLabel' && <AddressLabel />}
               {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
               {tab === 'accounts' && isAdmin && (
