@@ -131,6 +131,9 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   }
 
   async function handlePrint() {
+    // Selectie wissen zodra er geprint wordt; het printvoorbeeld zelf blijft
+    // werken (dat gebruikt previewItems, niet de selectie).
+    setSelected({});
     const error = await onRecordPrint({ batchNumber, includeBarcode, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
