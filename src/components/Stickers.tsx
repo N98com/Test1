@@ -9,6 +9,7 @@ import { PakbonUpload } from './PakbonUpload';
 import type { RecordPrintInput } from '../useStickerPrints';
 import { openPrintWindow } from '../lib/printWindow';
 import { Pagination } from './Pagination';
+import { SelectedList } from './SelectedList';
 import { PAGE_SIZE } from '../lib/pagination';
 
 interface Props {
@@ -203,48 +204,14 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             </button>
           </div>
 
-          {selectedProducts.length > 0 && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Geselecteerd</h3>
-                <button
-                  type="button"
-                  onClick={() => setSelected({})}
-                  className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                  Alles wissen
-                </button>
-              </div>
-              <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                {selectedProducts.map((product) => (
-                  <li key={product.id} className="flex items-center gap-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{product.articleNumber}</p>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">{product.description}</p>
-                    </div>
-                    <input
-                      type="number"
-                      min={1}
-                      value={selected[product.id]}
-                      onChange={(e) => setCopies(product.id, Number(e.target.value) || 1)}
-                      className="input w-20 shrink-0 text-right"
-                      aria-label={`Aantal stickers voor ${product.articleNumber}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeSelected(product.id)}
-                      aria-label={`${product.articleNumber} uit selectie halen`}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <SelectedList
+            products={selectedProducts}
+            copies={selected}
+            itemLabel="stickers"
+            onSetCopies={setCopies}
+            onRemove={removeSelected}
+            onClear={() => setSelected({})}
+          />
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Batch voor deze print</h3>
