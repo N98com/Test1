@@ -13,6 +13,7 @@ export interface BarcodeItem {
 interface Props {
   items: BarcodeItem[];
   onClose: () => void;
+  onPrint?: () => void;
 }
 
 function BarcodeLabel({ product }: { product: Product }) {
@@ -31,7 +32,7 @@ function BarcodeLabel({ product }: { product: Product }) {
   );
 }
 
-export function BarcodePreview({ items, onClose }: Props) {
+export function BarcodePreview({ items, onClose, onPrint }: Props) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -60,7 +61,10 @@ export function BarcodePreview({ items, onClose }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => {
+                onPrint?.();
+                window.print();
+              }}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
             >
               Printen

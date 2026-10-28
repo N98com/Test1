@@ -166,7 +166,15 @@ export function Barcodes({ products, companies }: Props) {
         <Pagination page={currentPage} totalPages={totalPages} totalCount={sorted.length} itemLabel="artikelen" onPageChange={setPage} />
       )}
 
-      {previewItems && <BarcodePreview items={previewItems} onClose={() => setPreviewItems(null)} />}
+      {previewItems && (
+        <BarcodePreview
+          items={previewItems}
+          onClose={() => setPreviewItems(null)}
+          // Selectie wissen zodra er geprint wordt; het voorbeeld zelf blijft
+          // werken (dat gebruikt previewItems, niet de selectie).
+          onPrint={() => setSelected({})}
+        />
+      )}
     </div>
   );
 }

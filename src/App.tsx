@@ -331,12 +331,12 @@ function AuthenticatedApp({
                 />
               </div>
               {tab === 'addressLabel' && <AddressLabel />}
-              {tab === 'barcodes' && (
-                <>
-                  <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Barcode generator</h2>
-                  <Barcodes products={products} companies={companies} />
-                </>
-              )}
+              {/* Net als Stickers altijd gemount (alleen verborgen), zodat de selectie
+                  bewaard blijft bij het wisselen van tabblad. */}
+              <div hidden={tab !== 'barcodes'}>
+                <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Barcode generator</h2>
+                <Barcodes products={products} companies={companies} />
+              </div>
               {tab === 'accounts' && isAdmin && (
                 <>
                   <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Accounts beheren</h2>
