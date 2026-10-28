@@ -38,6 +38,7 @@ function SettingsMenu({
   isAdmin,
   onOpenAccounts,
   onOpenLogs,
+  onOpenBarcodes,
   onOpenAccountSettings,
 }: {
   theme: 'light' | 'dark';
@@ -45,6 +46,7 @@ function SettingsMenu({
   isAdmin: boolean;
   onOpenAccounts: () => void;
   onOpenLogs: () => void;
+  onOpenBarcodes: () => void;
   onOpenAccountSettings: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -120,6 +122,19 @@ function SettingsMenu({
               <circle cx="12" cy="7" r="4" />
             </svg>
             Mijn account
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onOpenBarcodes();
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" />
+            </svg>
+            Barcode generator
           </button>
 
           {isAdmin && (
@@ -208,7 +223,6 @@ function AuthenticatedApp({
     { id: 'stickers', label: 'Stickers' },
     { id: 'addressLabel', label: 'Brief label' },
     { id: 'products', label: 'Producten' },
-    { id: 'barcodes', label: 'Barcode generator' },
     ...(isAdmin && SHOW_ACCOUNTS_TAB ? [{ id: 'accounts' as Tab, label: 'Accounts' }] : []),
   ];
 
@@ -235,6 +249,7 @@ function AuthenticatedApp({
               isAdmin={isAdmin}
               onOpenAccounts={() => setTab('accounts')}
               onOpenLogs={() => setTab('logs')}
+              onOpenBarcodes={() => setTab('barcodes')}
               onOpenAccountSettings={() => setAccountSettingsOpen(true)}
             />
             <button
@@ -316,7 +331,12 @@ function AuthenticatedApp({
                 />
               </div>
               {tab === 'addressLabel' && <AddressLabel />}
-              {tab === 'barcodes' && <Barcodes products={products} companies={companies} />}
+              {tab === 'barcodes' && (
+                <>
+                  <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Barcode generator</h2>
+                  <Barcodes products={products} companies={companies} />
+                </>
+              )}
               {tab === 'accounts' && isAdmin && (
                 <>
                   <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Accounts beheren</h2>
