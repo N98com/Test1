@@ -28,7 +28,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
   const [noBatch, setNoBatch] = useState(false);
-  const [includeBarcode, setIncludeBarcode] = useState(false);
+  const [includeBarcode, setIncludeBarcode] = useState(true);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
