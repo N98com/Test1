@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     }
 
     // Deze client heeft volledige rechten (service role) en omzeilt RLS bewust,
-    // alleen voor de twee acties hieronder.
+    // alleen voor de acties hieronder.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // email_confirm: het account is direct bevestigd en kan meteen inloggen.
@@ -87,6 +87,17 @@ Deno.serve(async (req) => {
         return json({ error: `Account aangemaakt, maar rol instellen mislukte: ${roleError.message}` }, 500);
       }
     }
+
+    // Logregel voor "Logs". Via de service role kent de database de aanroeper
+    // niet, dus die wordt hier zelf meegegeven. Mislukt het loggen, dan is het
+    // account toch al aangemaakt: niet als fout teruggeven.
+    await adminClient.from('activity_log').insert({
+      actor_id: userData.user.id,
+      actor_email: userData.user.email,
+      action: 'account_created',
+      target: email,
+      details: { role },
+    });
 
     return json({ success: true }, 200);
   } catch (err) {

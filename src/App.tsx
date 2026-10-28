@@ -16,9 +16,10 @@ import { AddressLabel } from './components/AddressLabel';
 import { Barcodes } from './components/Barcodes';
 import { AccountsAdmin } from './components/AccountsAdmin';
 import { AccountSettingsDialog } from './components/AccountSettingsDialog';
+import { LogsView } from './components/LogsView';
 import type { Profile } from './types';
 
-type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'addressLabel' | 'barcodes' | 'accounts';
+type Tab = 'overview' | 'intake' | 'outtake' | 'warehouses' | 'products' | 'stickers' | 'addressLabel' | 'barcodes' | 'accounts' | 'logs';
 
 // De tool wordt nu alleen gebruikt voor productbeheer en stickers, niet meer voor
 // voorraadbeheer. Deze tabs zijn tijdelijk uit de navigatie gehaald op verzoek, zonder de
@@ -36,12 +37,14 @@ function SettingsMenu({
   onToggleTheme,
   isAdmin,
   onOpenAccounts,
+  onOpenLogs,
   onOpenAccountSettings,
 }: {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   isAdmin: boolean;
   onOpenAccounts: () => void;
+  onOpenLogs: () => void;
   onOpenAccountSettings: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -137,6 +140,21 @@ function SettingsMenu({
                 </svg>
                 Accounts beheren
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenLogs();
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M8 13h8M8 17h8M8 9h2" />
+                </svg>
+                Logs
+              </button>
             </>
           )}
         </div>
@@ -216,6 +234,7 @@ function AuthenticatedApp({
               onToggleTheme={toggleTheme}
               isAdmin={isAdmin}
               onOpenAccounts={() => setTab('accounts')}
+              onOpenLogs={() => setTab('logs')}
               onOpenAccountSettings={() => setAccountSettingsOpen(true)}
             />
             <button
@@ -300,6 +319,12 @@ function AuthenticatedApp({
                 <>
                   <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Accounts beheren</h2>
                   <AccountsAdmin currentUserId={profile.id} />
+                </>
+              )}
+              {tab === 'logs' && isAdmin && (
+                <>
+                  <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Logs</h2>
+                  <LogsView />
                 </>
               )}
             </>

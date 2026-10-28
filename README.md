@@ -49,6 +49,11 @@ inlogscherm met twee rollen (Admin/Gebruiker).
   account dat de mutatie heeft uitgevoerd.
 - **Accounts** (Admin): nieuwe accounts aanmaken met wachtwoord en rol, plus een
   overzicht van alle accounts met een dropdown om de rol te wijzigen.
+- **Logs** (Admin, via het instellingen-icoon): overzicht van alle acties van alle
+  accounts (artikelen aanmaken/wijzigen/verwijderen, stickers printen, accounts
+  aanmaken, rollen wijzigen, eigen e-mail/wachtwoord wijzigen), 50 per pagina,
+  nieuwste bovenaan. Wordt vastgelegd door database-triggers
+  (`supabase/migrations/004_activity_log.sql`).
 - **Mijn account** (iedereen, via het instellingen-icoon): eigen e-mailadres en
   wachtwoord wijzigen, na invoer van het huidige wachtwoord.
 

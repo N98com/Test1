@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     }
 
     // Deze client heeft volledige rechten (service role) en omzeilt RLS bewust,
-    // alleen voor de twee acties hieronder.
+    // alleen voor de acties hieronder.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
@@ -91,6 +91,20 @@ Deno.serve(async (req) => {
         return json({ error: `E-mailadres gewijzigd, maar profiel bijwerken mislukte: ${profileError.message}` }, 500);
       }
     }
+
+    // Logregels voor "Logs". Via de service role kent de database de aanroeper
+    // niet, dus die wordt hier zelf meegegeven. Mislukt het loggen, dan is de
+    // wijziging toch al doorgevoerd: niet als fout teruggeven.
+    const logRows = [];
+    if (newEmail) {
+      logRows.push({ action: 'email_changed', target: newEmail, details: { from: user.email, to: newEmail } });
+    }
+    if (newPassword) {
+      logRows.push({ action: 'password_changed', target: newEmail || user.email, details: {} });
+    }
+    await adminClient
+      .from('activity_log')
+      .insert(logRows.map((row) => ({ ...row, actor_id: user.id, actor_email: newEmail || user.email })));
 
     return json({ success: true }, 200);
   } catch (err) {
