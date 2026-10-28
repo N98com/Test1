@@ -143,7 +143,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
 
     resetNewForm();
     setShowNewForm(false);
-    setFeedback({ text: `Artikel ${product.articleNumber} aangemaakt. Ga naar "Inboeken" om voorraad toe te voegen.`, type: 'success' });
+    setFeedback({ text: `Artikel ${product.articleNumber} aangemaakt.`, type: 'success' });
   }
 
   function startEdit(product: Product) {
