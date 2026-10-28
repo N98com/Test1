@@ -280,6 +280,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                   <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Omschrijving</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Bedrijf</th>
                   <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Stuks/doos</th>
+                  <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Aantal</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
@@ -300,6 +301,17 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                         <CompanyBadge companyId={product.companyId} name={companies.find((c) => c.id === product.companyId)?.name ?? '—'} />
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{product.unitsPerBox}</td>
+                      <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="number"
+                          min={1}
+                          value={selected[product.id] ?? ''}
+                          disabled={!isSelected}
+                          onChange={(e) => setCopies(product.id, Number(e.target.value) || 1)}
+                          className="input w-20 text-right disabled:opacity-40"
+                          aria-label={`Aantal stickers voor ${product.articleNumber}`}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
