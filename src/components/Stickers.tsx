@@ -226,7 +226,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                 onChange={(e) => setIncludeBarcode(e.target.checked)}
                 className="h-4 w-4"
               />
-              {noBatch ? 'Barcode toevoegen op de sticker' : 'Barcode toevoegen op de sticker (naast de batch)'}
+              Barcode toevoegen op de sticker
             </label>
           </div>
 
