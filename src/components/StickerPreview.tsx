@@ -15,6 +15,8 @@ interface Props {
   items: StickerItem[];
   batchNumber: string;
   includeBarcode: boolean;
+  // Vervangt het bedrijfslogo bovenaan door een grote "ALTERNATIEF PRODUCT"-tekst.
+  alternativeProduct: boolean;
   popup: Window;
   onClose: () => void;
   onPrint?: () => void;
@@ -119,7 +121,7 @@ function StickerBatchBox({ batchNumber, ean, includeBarcode }: { batchNumber: st
 // Rendert in een los, al geopend browsertabblad (popup), niet als overlay op de
 // huidige pagina: window.print()/Escape/sluiten moeten dus op dát venster werken,
 // niet op het venster van de app zelf.
-export function StickerPreview({ items, batchNumber, includeBarcode, popup, onClose, onPrint }: Props) {
+export function StickerPreview({ items, batchNumber, includeBarcode, alternativeProduct, popup, onClose, onPrint }: Props) {
   const { closed } = usePrintPopupLifecycle(popup, 'Stickers', onClose);
 
   if (closed || popup.closed) return null;
@@ -142,7 +144,7 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
             ) : (
               'Geen batch'
             )}{' '}
-            · Formaat 150 × 100 mm
+            {alternativeProduct && '· Alternatief product '}· Formaat 150 × 100 mm
           </p>
         </div>
         <div className="flex gap-2">
@@ -176,8 +178,12 @@ export function StickerPreview({ items, batchNumber, includeBarcode, popup, onCl
       <div className="sticker-print-area">
         {items.map((item) => (
           <div key={item.key} className="sticker-scale-outer">
-            <div className="sticker sticker-has-logo shadow-lg print:shadow-none">
-              <CompanyHeader companyId={item.product.companyId} />
+            <div className={`sticker shadow-lg print:shadow-none ${alternativeProduct ? 'sticker-alternative' : 'sticker-has-logo'}`}>
+              {alternativeProduct ? (
+                <div className="sticker-alternative-header">ALTERNATIEF PRODUCT</div>
+              ) : (
+                <CompanyHeader companyId={item.product.companyId} />
+              )}
               <StickerMainBox
                 articleNumber={item.product.articleNumber}
                 description={item.product.description}

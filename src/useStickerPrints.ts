@@ -16,6 +16,7 @@ interface StickerPrintRow {
   print_number: number;
   batch_number: string;
   include_barcode: boolean;
+  alternative_product: boolean;
   created_at: string;
   profiles: { email: string } | null;
   sticker_print_items: StickerPrintItemRow[];
@@ -35,6 +36,7 @@ const mapPrint = (row: StickerPrintRow): StickerPrint => ({
   printNumber: row.print_number,
   batchNumber: row.batch_number,
   includeBarcode: row.include_barcode,
+  alternativeProduct: row.alternative_product ?? false,
   createdAt: row.created_at,
   createdByEmail: row.profiles?.email ?? null,
   items: (row.sticker_print_items ?? []).map(mapItem),
@@ -43,6 +45,7 @@ const mapPrint = (row: StickerPrintRow): StickerPrint => ({
 export interface RecordPrintInput {
   batchNumber: string;
   includeBarcode: boolean;
+  alternativeProduct: boolean;
   items: StickerPrintItem[];
 }
 
@@ -95,12 +98,17 @@ export function useStickerPrints(canRead: boolean) {
     };
   }, [canRead, refetch]);
 
-  const recordPrint = useCallback(async ({ batchNumber, includeBarcode, items }: RecordPrintInput): Promise<string | null> => {
+  const recordPrint = useCallback(async ({ batchNumber, includeBarcode, alternativeProduct, items }: RecordPrintInput): Promise<string | null> => {
     const printId = crypto.randomUUID();
 
     const { error: printError } = await supabase
       .from('sticker_prints')
-      .insert({ id: printId, batch_number: batchNumber, include_barcode: includeBarcode });
+      .insert({
+        id: printId,
+        batch_number: batchNumber,
+        include_barcode: includeBarcode,
+        alternative_product: alternativeProduct,
+      });
     if (printError) return printError.message;
 
     const { error: itemsError } = await supabase.from('sticker_print_items').insert(

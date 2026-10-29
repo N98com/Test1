@@ -75,6 +75,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
     const error = await onRecordPrint({
       batchNumber: reprint.print.batchNumber,
       includeBarcode: reprint.print.includeBarcode,
+      alternativeProduct: reprint.print.alternativeProduct,
       items: reprint.print.items,
     });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
@@ -99,6 +100,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Door</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Batch</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Barcode</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Alternatief</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Artikelen</th>
               <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Totaal</th>
               <th className="px-3 py-2"></th>
@@ -114,6 +116,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.createdByEmail ?? '—'}</td>
                   <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">{print.batchNumber || 'Geen batch'}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.includeBarcode ? 'Ja' : 'Nee'}</td>
+                  <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{print.alternativeProduct ? 'Ja' : 'Nee'}</td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
                     <button
                       type="button"
@@ -177,6 +180,7 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
           items={reprint.items}
           batchNumber={reprint.print.batchNumber}
           includeBarcode={reprint.print.includeBarcode}
+          alternativeProduct={reprint.print.alternativeProduct}
           popup={reprint.popup}
           onClose={() => setReprint(null)}
           onPrint={handlePrint}

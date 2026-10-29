@@ -56,6 +56,7 @@ export interface StickerPrint {
   printNumber: number;
   batchNumber: string;
   includeBarcode: boolean;
+  alternativeProduct: boolean;
   createdAt: string;
   createdByEmail: string | null;
   items: StickerPrintItem[];

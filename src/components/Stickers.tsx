@@ -30,6 +30,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [year, setYear] = useState(currentYearShort());
   const [noBatch, setNoBatch] = useState(false);
   const [includeBarcode, setIncludeBarcode] = useState(true);
+  const [alternativeProduct, setAlternativeProduct] = useState(false);
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
@@ -135,7 +136,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     // Selectie wissen zodra er geprint wordt; het printvoorbeeld zelf blijft
     // werken (dat gebruikt previewItems, niet de selectie).
     setSelected({});
-    const error = await onRecordPrint({ batchNumber, includeBarcode, items: printLogItems });
+    const error = await onRecordPrint({ batchNumber, includeBarcode, alternativeProduct, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
 
@@ -258,6 +259,16 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
               />
               Barcode toevoegen op de sticker
             </label>
+
+            <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={alternativeProduct}
+                onChange={(e) => setAlternativeProduct(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Alternatief product
+            </label>
           </div>
 
           <input
@@ -338,6 +349,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
               items={previewItems}
               batchNumber={batchNumber}
               includeBarcode={includeBarcode}
+              alternativeProduct={alternativeProduct}
               popup={previewWindow}
               onClose={() => {
                 setPreviewItems(null);

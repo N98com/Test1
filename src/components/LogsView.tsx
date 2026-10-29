@@ -65,7 +65,7 @@ function detailLines(row: LogRow): string[] {
       const items = (d.items ?? []) as { article_number: string; copies: number }[];
       const batch = d.batch ? `Batch ${d.batch}` : 'Geen batch';
       return [
-        `${batch}${d.barcode ? ' · met barcode' : ''}`,
+        `${batch}${d.barcode ? ' · met barcode' : ''}${d.alternative ? ' · alternatief product' : ''}`,
         items.map((item) => `${item.article_number} (${item.copies}×)`).join(', '),
       ];
     }

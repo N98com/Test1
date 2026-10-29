@@ -87,6 +87,26 @@ body {
   padding-top: 5mm;
 }
 
+/* "Alternatief product": in plaats van het kleine bedrijfslogo een grote,
+   dikgedrukte melding bovenaan. Die is hoger dan het logo, dus de ruimte
+   onderaan de sticker wordt evenveel kleiner zodat de vakken eronder
+   precies dezelfde maat en plek houden. */
+.sticker-alternative {
+  padding-top: 4mm;
+  padding-bottom: 5mm;
+}
+
+.sticker-alternative-header {
+  height: 12mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 21pt;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .sticker-company-header {
   display: flex;
   align-items: center;
