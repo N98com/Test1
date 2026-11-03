@@ -72,10 +72,35 @@ function lumaDescriptionLines(description: string): string[] {
 // in de resterende "type"-tekst wordt opgenomen (zie extractStickerFacts).
 const COLOR_WORDS = [
   'zwart', 'wit', 'goud', 'zilver', 'brons', 'grijs', 'antraciet', 'chroom',
-  'koper', 'messing', 'rvs', 'inox', 'naturel', 'beige', 'bruin', 'rood',
-  'blauw', 'groen', 'geel', 'oranje',
+  'koper', 'messing', 'nikkel', 'gunmetal', 'rvs', 'inox', 'naturel', 'beige',
+  'bruin', 'rood', 'blauw', 'groen', 'geel', 'oranje',
 ];
 const COLOR_QUALIFIERS = ['mat', 'glans', 'glanzend', 'geborsteld', 'gepolijst', 'satijn'];
+
+const QUALIFIER_RE = `(?:(?:${COLOR_QUALIFIERS.join('|')})\\s+)?`;
+const COLOR_RE = `(?:${COLOR_WORDS.join('|')})`;
+// Eén kleur of een combinatie ("Zwart & Goud", "Wit en Goud", "Zwart/Goud").
+const COLOR_SEQUENCE_RE = new RegExp(
+  `\\b${QUALIFIER_RE}${COLOR_RE}\\b(?:\\s*(?:/|&|\\+|\\ben\\b)\\s*${QUALIFIER_RE}${COLOR_RE}\\b)*`,
+  'gi',
+);
+
+// Lichtkleur ("warm wit", "extra warm wit", ...) is geen behuizingskleur: de
+// kelvinwaarde staat al op de sticker, en anders zou "wit" hieruit als kleur
+// gezien worden terwijl de echte kleur (bv. "| Nikkel") verderop staat.
+const LIGHT_COLOR_RE = /\b(?:extra\s+)?(?:warm|koel|koud|neutraal|daglicht)\s+wit\b/gi;
+
+// Afkortingen (RVS) volledig in hoofdletters, overige kleuren met één hoofdletter.
+const capitalize = (w: string) =>
+  w.toLowerCase() === 'rvs' ? 'RVS' : w[0].toUpperCase() + w.slice(1).toLowerCase();
+
+// Zet een gevonden kleurreeks om naar de sticker-notatie: glans-aanduiding
+// weg, elke kleur met hoofdletter, en een combinatie met "/" blijft "/",
+// anders " & " ("Zwart en goud" -> "Zwart & Goud").
+function formatColor(sequence: string): string {
+  const colors = [...sequence.matchAll(new RegExp(`\\b${COLOR_RE}\\b`, 'gi'))].map((m) => capitalize(m[0]));
+  return colors.join(sequence.includes('/') ? '/' : ' & ');
+}
 
 interface StickerFacts {
   type: string;
@@ -83,6 +108,16 @@ interface StickerFacts {
   kelvin: string;
   color: string;
 }
+
+const NUMBER = String.raw`\d+(?:\.\d+)?`;
+// Watt, ook meerdere opties ("18W/25W").
+const WATT_RE = new RegExp(String.raw`\b${NUMBER}\s*(?:w|watt)\b(?:\s*/\s*${NUMBER}\s*(?:w|watt)\b)*`, 'i');
+// Kelvin, ook een bereik ("2000-3000 kelvin"), meerdere opties
+// ("3000K/4000K/5000K") en een bereik zonder bovengrens ("2200 - kelvin").
+const KELVIN_RE = new RegExp(
+  String.raw`\b${NUMBER}(?:\s*-\s*${NUMBER})?(?:\s*-)?\s*(?:k|kelvin)\b(?:\s*/\s*${NUMBER}\s*(?:k|kelvin)\b)*`,
+  'i',
+);
 
 // Nieuwe, algemene aanpak (i.p.v. de hele omschrijving proberen te tonen):
 // haalt alleen de vier dingen eruit die er echt toe doen op een sticker -
@@ -92,48 +127,68 @@ interface StickerFacts {
 // hierboven), maar dan als aparte velden i.p.v. inline vervangingen.
 function extractStickerFacts(description: string, options: { includeWatt: boolean }): StickerFacts {
   let text = description
+    // Lange streepjes ("2000–3000") gelijk trekken met een gewoon streepje.
+    .replace(/[‒-―]/g, '-')
+    // Decimale komma ("3,5 watt") als punt, zodat het getal heel blijft;
+    // overige komma's en "|" zijn alleen scheidingstekens.
+    .replace(/(\d),(\d)/g, '$1.$2')
+    // Vóór het weghalen van "|": zo telt "dim to warm | Wit" niet als "warm wit".
+    .replace(LIGHT_COLOR_RE, ' ')
     .replace(/[|,]/g, ' ')
-    .replace(/\s*\d+(?:[.,]\d+)?\s*volt\b/gi, '')
-    .replace(/\s*\d+(?:[.,]\d+)?\s*lumen\b/gi, '')
+    .replace(/\s*(?:voor\s+)?\d+(?:\.\d+)?(?:\s*(?:en|\/|-)\s*\d+(?:\.\d+)?)*\s*volt\b/gi, '')
+    .replace(/\s*\d+(?:\.\d+)?\s*lumen\b/gi, '')
     // Functionele beschrijving (niet type/watt/kelvin/kleur) hoort niet meer
     // op de sticker thuis, bv. "Up en/& Down" bij wandlampen of "Maximaal"
     // (het getal zelf blijft gewoon staan, alleen dit woord ervoor niet).
     .replace(/\bup\s*(?:en|&|and)\s*down\b/gi, '')
     .replace(/\bmaximaal\b/gi, '')
-    .replace(/\bdimbaar\b/gi, '')
+    // "(wel) dimbaar" weg; "niet dimbaar" blijft wel staan, dat is juist
+    // het verschil met een verder gelijk dimbaar artikel.
+    .replace(/(?<!\bniet\s)\b(?:wel\s+)?dimbaar\b/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
 
   let watt = '';
-  const wattMatch = text.match(/\b(\d+(?:[.,]\d+)?)\s*(?:w\b|watt\b)/i);
+  const wattMatch = text.match(WATT_RE);
   if (wattMatch) {
-    watt = `${wattMatch[1]}W`;
+    watt = [...wattMatch[0].matchAll(new RegExp(NUMBER, 'g'))].map((m) => `${m[0]}W`).join('/');
     text = text.replace(wattMatch[0], ' ');
   }
 
   let kelvin = '';
-  const kelvinMatch = text.match(/\b(\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?)\s*(?:k\b|kelvin\b)/i);
+  const kelvinMatch = text.match(KELVIN_RE);
   if (kelvinMatch) {
-    kelvin = `${kelvinMatch[1].replace(/\s+/g, '')}K`;
+    kelvin = kelvinMatch[0]
+      .replace(/\s+/g, '')
+      .replace(/-?(?:kelvin|k)\b/gi, 'K')
+      .replace(/-K/g, 'K');
     text = text.replace(kelvinMatch[0], ' ');
   }
 
+  // De productkleur staat meestal achteraan (vaak na "|"): bij meerdere
+  // kleurvermeldingen telt dus de laatste.
   let color = '';
-  const colorAlternation = COLOR_WORDS.join('|');
-  for (const word of COLOR_WORDS) {
-    // Ook een dubbele kleur meenemen (bv. "Zwart/Goud"), anders blijft de
-    // tweede kleur na "/" los in de type-tekst hangen.
-    const re = new RegExp(`\\b(?:(?:${COLOR_QUALIFIERS.join('|')})\\s+)?(${word})\\b(?:\\s*/\\s*(${colorAlternation})\\b)?`, 'i');
-    const match = text.match(re);
-    if (match) {
-      const capitalize = (w: string) => w[0].toUpperCase() + w.slice(1).toLowerCase();
-      color = match[2] ? `${capitalize(match[1])}/${capitalize(match[2])}` : capitalize(match[1]);
-      text = text.replace(match[0], ' ');
-      break;
-    }
+  const colorMatches = [...text.matchAll(COLOR_SEQUENCE_RE)];
+  const colorMatch = colorMatches[colorMatches.length - 1];
+  if (colorMatch) {
+    color = formatColor(colorMatch[0]);
+    text = text.slice(0, colorMatch.index) + ' ' + text.slice(colorMatch.index! + colorMatch[0].length);
   }
 
-  const type = collapseEmptySegments(text).replace(/\s{2,}/g, ' ').trim();
+  const type = collapseEmptySegments(
+    text
+      // Lege haakjes en losse "/" die overblijven na het weghalen van watt/kelvin
+      // (bv. "(18W)" of "2200K/flame"); "inbouw/opbouw" blijft gewoon staan.
+      .replace(/\(\s*\)/g, ' ')
+      .replace(/(^|\s)\/+|\/+(?=\s|$)/g, '$1'),
+  )
+    // " - " is in de omschrijving een scheidingsteken; op de sticker staan de
+    // delen gewoon naast elkaar (anders breekt een regel af op een los streepje).
+    .replace(/\s+-\s+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    // Vaste woordgroepen niet over twee regels verdelen (zie balanceTwoLines).
+    .replace(/\bniet dimbaar\b|\bdim to warm\b/gi, (phrase) => phrase.replace(/ /g, '\u00a0'));
 
   return { type, watt: options.includeWatt ? watt : '', kelvin, color };
 }
@@ -165,7 +220,7 @@ function balanceTwoLines(tokens: string[]): string[] {
 
 function factsToLines(facts: StickerFacts): string[] {
   const specLine = [facts.watt, facts.kelvin, facts.color].filter(Boolean).join(' ');
-  const typeWords = facts.type.split(/\s+/).filter(Boolean);
+  const typeWords = facts.type.split(' ').filter(Boolean);
   const tokens = specLine ? [...typeWords, specLine] : typeWords;
   return balanceTwoLines(tokens);
 }
