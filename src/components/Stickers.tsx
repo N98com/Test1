@@ -21,6 +21,26 @@ interface Props {
   printsLoading: boolean;
 }
 
+// Laatst ingevulde aantal per doos per artikel met een variabel aantal, zodat
+// dat de volgende keer al klaarstaat. Alleen in deze browser (localStorage).
+const LAST_VARIABLE_UNITS_KEY = 'stickers.lastVariableUnits';
+
+function readLastVariableUnits(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_VARIABLE_UNITS_KEY) ?? '{}') ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLastVariableUnits(productId: string, value: string) {
+  try {
+    localStorage.setItem(LAST_VARIABLE_UNITS_KEY, JSON.stringify({ ...readLastVariableUnits(), [productId]: value }));
+  } catch {
+    // Opslag niet beschikbaar (bv. privévenster): dan wordt er niets onthouden.
+  }
+}
+
 export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, printsLoading }: Props) {
   const [view, setView] = useState<'generate' | 'pakbon' | 'history'>('generate');
   const [query, setQuery] = useState('');
@@ -32,7 +52,14 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [includeBarcode, setIncludeBarcode] = useState(true);
   const [alternativeProduct, setAlternativeProduct] = useState(false);
   // Aantal per doos voor artikelen met een variabel aantal, per print ingevuld.
-  const [variableUnits, setVariableUnits] = useState<Record<string, string>>({});
+  // Begint met de laatst gebruikte waarden; na het printen wordt weer
+  // teruggevallen op die (dan bijgewerkte) waarden.
+  const [variableUnits, setVariableUnits] = useState<Record<string, string>>(readLastVariableUnits);
+
+  function changeVariableUnits(productId: string, value: string) {
+    setVariableUnits((prev) => ({ ...prev, [productId]: value }));
+    saveLastVariableUnits(productId, value);
+  }
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
@@ -148,7 +175,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     // Selectie wissen zodra er geprint wordt; het printvoorbeeld zelf blijft
     // werken (dat gebruikt previewItems, niet de selectie).
     setSelected({});
-    setVariableUnits({});
+    setVariableUnits(readLastVariableUnits());
     const error = await onRecordPrint({ batchNumber, includeBarcode, alternativeProduct, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
@@ -233,7 +260,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                     min={1}
                     step={1}
                     value={variableUnits[product.id] ?? ''}
-                    onChange={(e) => setVariableUnits((prev) => ({ ...prev, [product.id]: e.target.value }))}
+                    onChange={(e) => changeVariableUnits(product.id, e.target.value)}
                     className={`input w-20 text-right ${parsedVariableUnits(product.id) === null ? 'border-red-400 dark:border-red-400' : ''}`}
                     placeholder="?"
                     aria-label={`Aantal per doos voor ${product.articleNumber}`}
