@@ -104,11 +104,6 @@ export function Barcodes({ products, companies }: Props) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        Selecteer artikelen (alfabetisch gesorteerd) en genereer werkende barcodes op basis van de EAN-code, voor de
-        Zebra-labelprinter (150 × 100&nbsp;mm).
-      </p>
-
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
         <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Vrije invoer</h3>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
@@ -157,6 +152,11 @@ export function Barcodes({ products, companies }: Props) {
           </div>
         )}
       </div>
+
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Selecteer artikelen (alfabetisch gesorteerd) en genereer werkende barcodes op basis van de EAN-code, voor de
+        Zebra-labelprinter (150 × 100&nbsp;mm).
+      </p>
 
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
         <p className="text-sm text-slate-600 dark:text-slate-300">
