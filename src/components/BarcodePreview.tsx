@@ -21,10 +21,13 @@ function BarcodeLabel({ product }: { product: Product }) {
   const { containerRef, scale } = useShrinkToFit<HTMLDivElement>([product.articleNumber, shortDescription]);
   return (
     <div className="barcode-label">
-      <div ref={containerRef} className="barcode-label-text">
-        <div className="sticker-line" style={{ fontSize: `${30 * scale}pt` }}>{product.articleNumber}</div>
-        <div className="sticker-line" style={{ fontSize: `${20 * scale}pt` }}>{shortDescription}</div>
-      </div>
+      {/* Bij vrije invoer is er geen artikelnummer/omschrijving: alleen de barcode. */}
+      {(product.articleNumber || shortDescription) && (
+        <div ref={containerRef} className="barcode-label-text">
+          <div className="sticker-line" style={{ fontSize: `${30 * scale}pt` }}>{product.articleNumber}</div>
+          <div className="sticker-line" style={{ fontSize: `${20 * scale}pt` }}>{shortDescription}</div>
+        </div>
+      )}
       <div className="barcode-label-svg">
         <BarcodeSvg ean={product.ean} />
       </div>

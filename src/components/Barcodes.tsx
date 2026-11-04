@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { Company, Product } from '../types';
 import { CompanyBadge } from './CompanyBadge';
+import { Field } from './Field';
 import { BarcodePreview, type BarcodeItem } from './BarcodePreview';
 import { Pagination } from './Pagination';
 import { SelectedList } from './SelectedList';
+import { BarcodeSvg } from './BarcodeSvg';
 import { PAGE_SIZE } from '../lib/pagination';
 
 interface Props {
@@ -16,6 +18,13 @@ export function Barcodes({ products, companies }: Props) {
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [previewItems, setPreviewItems] = useState<BarcodeItem[] | null>(null);
   const [page, setPage] = useState(1);
+  const [freeCode, setFreeCode] = useState('');
+  const [freeCopies, setFreeCopies] = useState(1);
+
+  // CODE128 (de terugval voor alles wat geen geldige EAN is) kan alleen
+  // standaard ASCII-tekens aan, dus geen é, ë, €, enz.
+  const trimmedFreeCode = freeCode.trim();
+  const freeCodeValid = /^[\x20-\x7E]+$/.test(trimmedFreeCode);
 
   const sorted = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,6 +76,20 @@ export function Barcodes({ products, companies }: Props) {
     [products, selected],
   );
 
+  function handleGenerateFree() {
+    // Geen echt artikel: alleen de barcode (zonder artikelnummer/omschrijving) op het label.
+    const product: Product = {
+      id: 'vrije-invoer',
+      articleNumber: '',
+      description: '',
+      ean: trimmedFreeCode,
+      companyId: '',
+      unitsPerBox: 0,
+      createdAt: '',
+    };
+    setPreviewItems(Array.from({ length: freeCopies }, (_, i) => ({ key: `vrije-invoer-${i}`, product })));
+  }
+
   function handleGenerate() {
     const items: BarcodeItem[] = [];
     for (const product of products) {
@@ -85,6 +108,55 @@ export function Barcodes({ products, companies }: Props) {
         Selecteer artikelen (alfabetisch gesorteerd) en genereer werkende barcodes op basis van de EAN-code, voor de
         Zebra-labelprinter (150 × 100&nbsp;mm).
       </p>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Vrije invoer</h3>
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+          <Field label="Code of tekst">
+            <input
+              type="text"
+              value={freeCode}
+              onChange={(e) => setFreeCode(e.target.value)}
+              className="input font-mono"
+              placeholder="Bijv. 8719304551234 of een eigen code"
+            />
+          </Field>
+          <Field label="Aantal">
+            <input
+              type="number"
+              min={1}
+              value={freeCopies}
+              onChange={(e) => setFreeCopies(Math.max(1, Number(e.target.value) || 1))}
+              className="input w-20 text-right"
+            />
+          </Field>
+          <button
+            type="button"
+            onClick={handleGenerateFree}
+            disabled={!freeCodeValid}
+            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+          >
+            Barcode genereren
+          </button>
+        </div>
+        {trimmedFreeCode && (
+          <div className="mt-4">
+            {freeCodeValid ? (
+              <div className="flex justify-center overflow-x-auto rounded-lg bg-white p-3 [&_svg]:h-auto [&_svg]:max-w-full">
+                <BarcodeSvg ean={trimmedFreeCode} width={2} height={80} fontSize={18} />
+              </div>
+            ) : (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-400/10 dark:text-red-300">
+                Deze tekst bevat tekens die niet in een barcode kunnen (zoals é, ë of €). Gebruik alleen letters, cijfers en
+                gewone leestekens.
+              </p>
+            )}
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              13 of 8 cijfers wordt een EAN-barcode (als het controlecijfer klopt), al het andere een CODE128-barcode.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
         <p className="text-sm text-slate-600 dark:text-slate-300">

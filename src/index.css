@@ -288,6 +288,14 @@ body {
 .barcode-label-svg {
   display: flex;
   justify-content: center;
+  max-width: 100%;
+}
+
+/* Lange vrije invoer geeft een brede CODE128-barcode: verkleinen tot de
+   labelbreedte i.p.v. eroverheen te lopen. */
+.barcode-label-svg svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Zelfde reden als .sticker-print-area hierboven: off-screen i.p.v.

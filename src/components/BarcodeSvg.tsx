@@ -21,7 +21,13 @@ export function BarcodeSvg({ ean, width = 2, height = 90, fontSize = 22, margin 
     } catch {
       // Checksum van de EAN klopt niet (typefout e.d.): val terug op CODE128
       // zodat er alsnog een werkende barcode ontstaat.
-      JsBarcode(svgRef.current, ean, { ...options, format: 'CODE128' });
+      try {
+        JsBarcode(svgRef.current, ean, { ...options, format: 'CODE128' });
+      } catch {
+        // Ook CODE128 lukt niet (leeg of tekens buiten ASCII, bij vrije invoer):
+        // geen barcode tonen i.p.v. de pagina te laten crashen.
+        svgRef.current.replaceChildren();
+      }
     }
   }, [ean, width, height, fontSize, margin]);
 
