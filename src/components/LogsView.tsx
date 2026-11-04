@@ -29,6 +29,7 @@ const FIELD_LABELS: Record<string, string> = {
   ean: 'EAN',
   company_id: 'Bedrijf',
   units_per_box: 'Stuks per doos',
+  variable_units: 'Variabel aantal',
 };
 
 const ROLE_LABELS: Record<string, string> = { admin: 'Admin', user: 'Gebruiker' };
@@ -44,6 +45,7 @@ function formatDateTime(iso: string): string {
 }
 
 function show(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'Ja' : 'Nee';
   return value === null || value === undefined || value === '' ? '(leeg)' : String(value);
 }
 
@@ -52,7 +54,7 @@ function detailLines(row: LogRow): string[] {
   const d = row.details;
   switch (row.action) {
     case 'product_created':
-      return [`${show(d.description)}`, `EAN ${show(d.ean)} · ${show(d.units_per_box)} st/doos`];
+      return [`${show(d.description)}`, `EAN ${show(d.ean)} · ${d.variable_units ? 'variabel aantal' : `${show(d.units_per_box)} st/doos`}`];
     case 'product_deleted':
       return [`${show(d.description)}`, `EAN ${show(d.ean)}`];
     case 'product_updated': {

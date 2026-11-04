@@ -85,6 +85,7 @@ export function Barcodes({ products, companies }: Props) {
       ean: trimmedFreeCode,
       companyId: '',
       unitsPerBox: 0,
+      variableUnits: false,
       createdAt: '',
     };
     setPreviewItems(Array.from({ length: freeCopies }, (_, i) => ({ key: `vrije-invoer-${i}`, product })));

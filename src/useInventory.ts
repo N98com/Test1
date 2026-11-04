@@ -21,6 +21,7 @@ interface ProductRow {
   ean: string;
   company_id: string;
   units_per_box: number;
+  variable_units: boolean;
   created_at: string;
 }
 
@@ -60,6 +61,7 @@ const mapProduct = (row: ProductRow): Product => ({
   ean: row.ean,
   companyId: row.company_id,
   unitsPerBox: row.units_per_box,
+  variableUnits: row.variable_units ?? false,
   createdAt: row.created_at,
 });
 
@@ -168,6 +170,7 @@ export function useInventory(canReadHistory: boolean) {
         ean: input.ean,
         company_id: input.companyId,
         units_per_box: input.unitsPerBox,
+        variable_units: input.variableUnits,
       })
       .select()
       .single();
@@ -187,6 +190,7 @@ export function useInventory(canReadHistory: boolean) {
     if (patch.ean !== undefined) dbPatch.ean = patch.ean;
     if (patch.companyId !== undefined) dbPatch.company_id = patch.companyId;
     if (patch.unitsPerBox !== undefined) dbPatch.units_per_box = patch.unitsPerBox;
+    if (patch.variableUnits !== undefined) dbPatch.variable_units = patch.variableUnits;
 
     const { error } = await supabase.from('products').update(dbPatch).eq('id', id);
     if (error) return error.message;

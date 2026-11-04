@@ -31,6 +31,8 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [noBatch, setNoBatch] = useState(false);
   const [includeBarcode, setIncludeBarcode] = useState(true);
   const [alternativeProduct, setAlternativeProduct] = useState(false);
+  // Aantal per doos voor artikelen met een variabel aantal, per print ingevuld.
+  const [variableUnits, setVariableUnits] = useState<Record<string, string>>({});
   const [previewItems, setPreviewItems] = useState<StickerItem[] | null>(null);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [printLogItems, setPrintLogItems] = useState<StickerPrintItem[]>([]);
@@ -90,6 +92,12 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     [products, selected],
   );
 
+  const parsedVariableUnits = (productId: string) => {
+    const n = Number(variableUnits[productId]);
+    return Number.isInteger(n) && n >= 1 ? n : null;
+  };
+  const missingVariableUnits = selectedProducts.filter((p) => p.variableUnits && parsedVariableUnits(p.id) === null);
+
   function applyPakbonMatches(matches: { productId: string; copies: number }[]) {
     setSelected((prev) => {
       const next = { ...prev };
@@ -111,9 +119,13 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
 
     const items: StickerItem[] = [];
     const logItems: StickerPrintItem[] = [];
-    for (const product of products) {
-      const copies = selected[product.id];
+    for (const baseProduct of products) {
+      const copies = selected[baseProduct.id];
       if (!copies) continue;
+      // Variabel aantal: het hier ingevulde aantal komt op de sticker (en in Historie).
+      const product = baseProduct.variableUnits
+        ? { ...baseProduct, unitsPerBox: parsedVariableUnits(baseProduct.id) ?? baseProduct.unitsPerBox }
+        : baseProduct;
       for (let i = 0; i < copies; i += 1) {
         items.push({ key: `${product.id}-${i}`, product });
       }
@@ -136,6 +148,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     // Selectie wissen zodra er geprint wordt; het printvoorbeeld zelf blijft
     // werken (dat gebruikt previewItems, niet de selectie).
     setSelected({});
+    setVariableUnits({});
     const error = await onRecordPrint({ batchNumber, includeBarcode, alternativeProduct, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
@@ -198,7 +211,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={totalStickers === 0}
+              disabled={totalStickers === 0 || missingVariableUnits.length > 0}
               className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
             >
               Stickers genereren
@@ -212,7 +225,30 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             onSetCopies={setCopies}
             onRemove={removeSelected}
             onClear={() => setSelected({})}
+            renderExtra={(product) =>
+              product.variableUnits ? (
+                <label className="flex shrink-0 items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={variableUnits[product.id] ?? ''}
+                    onChange={(e) => setVariableUnits((prev) => ({ ...prev, [product.id]: e.target.value }))}
+                    className={`input w-20 text-right ${parsedVariableUnits(product.id) === null ? 'border-red-400 dark:border-red-400' : ''}`}
+                    placeholder="?"
+                    aria-label={`Aantal per doos voor ${product.articleNumber}`}
+                  />
+                  st/doos
+                </label>
+              ) : null
+            }
           />
+
+          {missingVariableUnits.length > 0 && (
+            <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-400/10 dark:text-amber-300">
+              Vul het aantal per doos in voor {missingVariableUnits.map((p) => p.articleNumber).join(', ')} (variabel aantal).
+            </p>
+          )}
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Batch voor deze print</h3>
@@ -311,7 +347,9 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
                       <td className="px-3 py-2">
                         <CompanyBadge companyId={product.companyId} name={companies.find((c) => c.id === product.companyId)?.name ?? '—'} />
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{product.unitsPerBox}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                        {product.variableUnits ? 'Variabel' : product.unitsPerBox}
+                      </td>
                       <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="number"

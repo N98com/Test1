@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Product } from '../types';
 
 interface Props {
@@ -9,11 +10,13 @@ interface Props {
   onSetCopies: (productId: string, copies: number) => void;
   onRemove: (productId: string) => void;
   onClear: () => void;
+  // Extra invoer per artikel vóór het aantal (bv. aantal per doos bij een variabel aantal).
+  renderExtra?: (product: Product) => ReactNode;
 }
 
 // Overzicht van de geselecteerde artikelen met aantal per artikel, gedeeld door
 // Stickers en Barcode generator.
-export function SelectedList({ products, copies, itemLabel, onSetCopies, onRemove, onClear }: Props) {
+export function SelectedList({ products, copies, itemLabel, onSetCopies, onRemove, onClear, renderExtra }: Props) {
   if (products.length === 0) return null;
 
   return (
@@ -35,6 +38,7 @@ export function SelectedList({ products, copies, itemLabel, onSetCopies, onRemov
               <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{product.articleNumber}</p>
               <p className="truncate text-xs text-slate-500 dark:text-slate-400">{product.description}</p>
             </div>
+            {renderExtra?.(product)}
             <input
               type="number"
               min={1}

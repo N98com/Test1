@@ -31,6 +31,7 @@ interface Draft {
   ean: string;
   companyId: string;
   unitsPerBox: string;
+  variableUnits: boolean;
 }
 
 function draftFor(product: Product): Draft {
@@ -40,6 +41,7 @@ function draftFor(product: Product): Draft {
     ean: product.ean,
     companyId: product.companyId,
     unitsPerBox: String(product.unitsPerBox),
+    variableUnits: product.variableUnits,
   };
 }
 
@@ -57,6 +59,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
   const [newUnitsPerBox, setNewUnitsPerBox] = useState(() => localStorage.getItem(LAST_UNITS_PER_BOX_KEY) || '50');
   // "Anders...": zelf een aantal invullen dat niet in de lijst staat. Staat ook
   // aan als het onthouden aantal van de vorige keer niet in de lijst voorkomt.
+  const [newVariableUnits, setNewVariableUnits] = useState(false);
   const [customUnits, setCustomUnits] = useState(() => !UNITS_PER_BOX_OPTIONS.includes(Number(newUnitsPerBox)));
   const [creating, setCreating] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -86,6 +89,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
     setNewArticleNumber('');
     setNewDescription('');
     setNewEan('');
+    setNewVariableUnits(false);
     // Bedrijf en aantal per volle doos blijven bewust staan (zie
     // LAST_COMPANY_KEY/LAST_UNITS_PER_BOX_KEY): dat zijn meestal dezelfde
     // waarden voor een reeks artikelen die achter elkaar wordt toegevoegd.
@@ -102,8 +106,10 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       setFeedback({ text: 'Vul artikelnummer, omschrijving, EAN en bedrijf in.', type: 'error' });
       return;
     }
-    const unitsPerBox = Number(newUnitsPerBox);
-    if (!Number.isInteger(unitsPerBox) || unitsPerBox < 1) {
+    // Bij een variabel aantal wordt het vaste aantal niet gebruikt; de kolom
+    // is verplicht, dus dan het gekozen getal (of 1) opslaan.
+    const unitsPerBox = newVariableUnits ? Math.max(1, Math.floor(Number(newUnitsPerBox)) || 1) : Number(newUnitsPerBox);
+    if (!newVariableUnits && (!Number.isInteger(unitsPerBox) || unitsPerBox < 1)) {
       setFeedback({ text: 'Vul een geldig aantal per volle doos in (heel getal, minimaal 1).', type: 'error' });
       return;
     }
@@ -130,6 +136,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       ean,
       companyId: newCompanyId,
       unitsPerBox,
+      variableUnits: newVariableUnits,
     });
     setCreating(false);
 
@@ -171,6 +178,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
       ean: draft.ean.trim(),
       companyId: draft.companyId,
       unitsPerBox: Number(draft.unitsPerBox) || 1,
+      variableUnits: draft.variableUnits,
     });
     setSaving(false);
     if (err) {
@@ -248,7 +256,7 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
               </select>
             </Field>
             <Field label="Aantal per volle doos">
-              <div className="flex gap-2">
+              <div className={`flex gap-2 ${newVariableUnits ? 'hidden' : ''}`}>
                 <select
                   value={customUnits ? CUSTOM_UNITS : newUnitsPerBox}
                   onChange={(e) => {
@@ -278,10 +286,22 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
                     className="input"
                     placeholder="Aantal"
                     autoFocus
-                    required
+                    required={!newVariableUnits}
                   />
                 )}
               </div>
+              {newVariableUnits && (
+                <p className="py-2.5 text-sm text-slate-500 dark:text-slate-400">Wordt bij elke stickerprint gevraagd.</p>
+              )}
+              <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={newVariableUnits}
+                  onChange={(e) => setNewVariableUnits(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Variabel aantal
+              </label>
             </Field>
           </div>
           <button
@@ -385,9 +405,19 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
                         type="number"
                         min={1}
                         value={draft.unitsPerBox}
+                        disabled={draft.variableUnits}
                         onChange={(e) => setDraft({ ...draft, unitsPerBox: e.target.value })}
-                        className="input text-right"
+                        className="input text-right disabled:opacity-40"
                       />
+                      <label className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={draft.variableUnits}
+                          onChange={(e) => setDraft({ ...draft, variableUnits: e.target.checked })}
+                          className="h-3.5 w-3.5"
+                        />
+                        Variabel
+                      </label>
                     </td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       <button
@@ -419,7 +449,9 @@ export function ProductsAdmin({ products, companies, isAdmin, onAddProduct, onUp
                   <td className="px-3 py-2">
                     <CompanyBadge companyId={product.companyId} name={companies.find((c) => c.id === product.companyId)?.name ?? '—'} />
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{product.unitsPerBox}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                    {product.variableUnits ? 'Variabel' : product.unitsPerBox}
+                  </td>
                   {isAdmin && (
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       <button

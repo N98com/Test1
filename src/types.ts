@@ -17,6 +17,8 @@ export interface Product {
   ean: string;
   companyId: string;
   unitsPerBox: number;
+  // Geen vast aantal per doos: bij stickers wordt steeds om het aantal gevraagd.
+  variableUnits: boolean;
   createdAt: string;
 }
 

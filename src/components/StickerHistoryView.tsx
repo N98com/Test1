@@ -61,6 +61,8 @@ export function StickerHistoryView({ prints, loading, onRecordPrint }: Props) {
             ean: item.ean,
             companyId: item.companyId,
             unitsPerBox: item.unitsPerBox,
+            // In de historie staat altijd het aantal dat destijds geprint is.
+            variableUnits: false,
             createdAt: print.createdAt,
           },
         });
