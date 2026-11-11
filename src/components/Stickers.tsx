@@ -5,7 +5,7 @@ import { CompanyBadge } from './CompanyBadge';
 import { MONTHS, currentMonthAbbrev, currentYearShort, formatBatch } from '../lib/batch';
 import { StickerPreview, type StickerItem } from './StickerPreview';
 import { StickerHistoryView } from './StickerHistoryView';
-import { PakbonUpload } from './PakbonUpload';
+import { PakbonUpload, type PakbonApplyMatch } from './PakbonUpload';
 import type { RecordPrintInput } from '../useStickerPrints';
 import { openPrintWindow } from '../lib/printWindow';
 import { Pagination } from './Pagination';
@@ -119,24 +119,32 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     [products, selected],
   );
 
-  const parsedVariableUnits = (productId: string) => {
-    const n = Number(variableUnits[productId]);
+  const parsedVariableUnits = (productId: string, units: Record<string, string> = variableUnits) => {
+    const n = Number(units[productId]);
     return Number.isInteger(n) && n >= 1 ? n : null;
   };
   const missingVariableUnits = selectedProducts.filter((p) => p.variableUnits && parsedVariableUnits(p.id) === null);
 
-  function applyPakbonMatches(matches: { productId: string; copies: number }[]) {
-    setSelected((prev) => {
-      const next = { ...prev };
-      for (const match of matches) {
-        next[match.productId] = match.copies;
-      }
-      return next;
-    });
+  // Pakbon toepassen: de selectie wordt vervangen door wat er op de pakbon
+  // staat. Voor artikelen met een variabel aantal komt het aantal per doos
+  // van de pakbon (Qty/CTN). Met generateNow worden de stickers meteen
+  // gegenereerd (synchroon in de klik, anders blokkeert de pop-upblokker).
+  function applyPakbonMatches(matches: PakbonApplyMatch[], generateNow: boolean) {
+    const nextSelected: Record<string, number> = {};
+    const nextUnits = { ...variableUnits };
+    for (const match of matches) {
+      nextSelected[match.productId] = match.copies;
+      if (match.unitsPerBox) nextUnits[match.productId] = String(match.unitsPerBox);
+    }
+    setSelected(nextSelected);
+    setVariableUnits(nextUnits);
     setView('generate');
+
+    const missing = products.some((p) => nextSelected[p.id] && p.variableUnits && parsedVariableUnits(p.id, nextUnits) === null);
+    if (generateNow && !missing) handleGenerate(nextSelected, nextUnits);
   }
 
-  function handleGenerate() {
+  function handleGenerate(selection: Record<string, number> = selected, units: Record<string, string> = variableUnits) {
     // Moet synchroon in de click-handler gebeuren, anders blokkeren pop-upblokkers dit.
     const popup = openPrintWindow('Stickers');
     if (!popup) {
@@ -147,11 +155,11 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     const items: StickerItem[] = [];
     const logItems: StickerPrintItem[] = [];
     for (const baseProduct of products) {
-      const copies = selected[baseProduct.id];
+      const copies = selection[baseProduct.id];
       if (!copies) continue;
       // Variabel aantal: het hier ingevulde aantal komt op de sticker (en in Historie).
       const product = baseProduct.variableUnits
-        ? { ...baseProduct, unitsPerBox: parsedVariableUnits(baseProduct.id) ?? baseProduct.unitsPerBox }
+        ? { ...baseProduct, unitsPerBox: parsedVariableUnits(baseProduct.id, units) ?? baseProduct.unitsPerBox }
         : baseProduct;
       for (let i = 0; i < copies; i += 1) {
         items.push({ key: `${product.id}-${i}`, product });
@@ -179,6 +187,67 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     const error = await onRecordPrint({ batchNumber, includeBarcode, alternativeProduct, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
   }
+
+  // Batch-, barcode- en alternatief-instellingen: zelfde blok (en dezelfde
+  // waarden) bij Genereren en bij Upload Pakbon.
+  const batchOptions = (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+      <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Batch voor deze print</h3>
+      {!noBatch && (
+        <div className="mb-4 grid gap-4 sm:grid-cols-3">
+          <Field label="Maand">
+            <select value={month} onChange={(e) => setMonth(e.target.value)} className="input">
+              {MONTHS.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Jaar">
+            <input
+              value={year}
+              onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              className="input"
+              placeholder="26"
+              maxLength={2}
+            />
+          </Field>
+          <Field label="Batchnummer">
+            <input value={batchNumber} disabled className="input" />
+          </Field>
+        </div>
+      )}
+
+      <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input
+          type="checkbox"
+          checked={noBatch}
+          onChange={(e) => setNoBatch(e.target.checked)}
+          className="h-4 w-4"
+        />
+        Geen Batch
+      </label>
+
+      <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input
+          type="checkbox"
+          checked={includeBarcode}
+          onChange={(e) => setIncludeBarcode(e.target.checked)}
+          className="h-4 w-4"
+        />
+        Barcode toevoegen op de sticker
+      </label>
+
+      <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input
+          type="checkbox"
+          checked={alternativeProduct}
+          onChange={(e) => setAlternativeProduct(e.target.checked)}
+          className="h-4 w-4"
+        />
+        Alternatief product
+      </label>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -222,7 +291,9 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
 
       {view === 'history' && <StickerHistoryView prints={prints} loading={printsLoading} onRecordPrint={onRecordPrint} />}
 
-      {view === 'pakbon' && <PakbonUpload products={products} companies={companies} onApply={applyPakbonMatches} />}
+      {view === 'pakbon' && (
+        <PakbonUpload products={products} companies={companies} onApply={applyPakbonMatches} batchOptions={batchOptions} />
+      )}
 
       {view === 'generate' && (
         <>
@@ -237,7 +308,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             </p>
             <button
               type="button"
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={totalStickers === 0 || missingVariableUnits.length > 0}
               className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
             >
@@ -277,62 +348,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             </p>
           )}
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Batch voor deze print</h3>
-            {!noBatch && (
-              <div className="mb-4 grid gap-4 sm:grid-cols-3">
-                <Field label="Maand">
-                  <select value={month} onChange={(e) => setMonth(e.target.value)} className="input">
-                    {MONTHS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Jaar">
-                  <input
-                    value={year}
-                    onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    className="input"
-                    placeholder="26"
-                    maxLength={2}
-                  />
-                </Field>
-                <Field label="Batchnummer">
-                  <input value={batchNumber} disabled className="input" />
-                </Field>
-              </div>
-            )}
-
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={noBatch}
-                onChange={(e) => setNoBatch(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Geen Batch
-            </label>
-
-            <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={includeBarcode}
-                onChange={(e) => setIncludeBarcode(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Barcode toevoegen op de sticker
-            </label>
-
-            <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={alternativeProduct}
-                onChange={(e) => setAlternativeProduct(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Alternatief product
-            </label>
-          </div>
+          {batchOptions}
 
           <input
             type="text"
