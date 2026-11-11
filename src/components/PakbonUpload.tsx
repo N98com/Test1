@@ -25,6 +25,8 @@ interface ReviewRow {
   aantal: number;
   // Stuks per doos volgens de pakbon (kolom Qty/CTN), als die gelezen kon worden.
   pakbonQtyPerCarton: number | null;
+  // De afzonderlijke pakbonregels van dit artikel (bij dubbele regels > 1).
+  pakbonLines: { cartons: number | null; qtyPerCarton: number | null }[];
 }
 
 interface UnknownLine {
@@ -45,6 +47,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 // Een afwijkend aantal per doos is alleen een probleem bij een vast aantal:
 // bij een variabel aantal wordt het pakbon-aantal juist overgenomen.
+// Hetzelfde artikel staat op meerdere pakbonregels met een verschillend aantal
+// per doos: die dozen krijgen nu allemaal dezelfde sticker, dus nalopen.
+const mixedQtyPerCarton = (row: ReviewRow) =>
+  new Set(row.pakbonLines.map((l) => l.qtyPerCarton).filter((q) => q !== null)).size > 1;
+
 const qtyMismatch = (row: ReviewRow) =>
   !row.product.variableUnits && row.pakbonQtyPerCarton !== null && row.pakbonQtyPerCarton !== row.product.unitsPerBox;
 
@@ -66,13 +73,17 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
     const lines = parsePackingList(await readPdfTextItems(file));
     if (!lines || lines.length === 0) return false;
 
-    const byEan = new Map<string, { cartons: number | null; qtyPerCarton: number | null; articleNumber: string }>();
+    const byEan = new Map<
+      string,
+      { cartons: number | null; qtyPerCarton: number | null; articleNumber: string; lines: ReviewRow['pakbonLines'] }
+    >();
     for (const line of lines) {
       const existing = byEan.get(line.ean);
       byEan.set(line.ean, {
         cartons: line.cartons === null ? (existing?.cartons ?? null) : (existing?.cartons ?? 0) + line.cartons,
         qtyPerCarton: existing?.qtyPerCarton ?? line.qtyPerCarton,
         articleNumber: existing?.articleNumber || line.articleNumber,
+        lines: [...(existing?.lines ?? []), { cartons: line.cartons, qtyPerCarton: line.qtyPerCarton }],
       });
     }
 
@@ -81,7 +92,13 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
     for (const [ean, line] of byEan) {
       const product = products.find((p) => p.ean.trim() === ean);
       if (product) {
-        matched.push({ key: product.id, product, aantal: line.cartons ?? 1, pakbonQtyPerCarton: line.qtyPerCarton });
+        matched.push({
+          key: product.id,
+          product,
+          aantal: line.cartons ?? 1,
+          pakbonQtyPerCarton: line.qtyPerCarton,
+          pakbonLines: line.lines,
+        });
       } else {
         notFound.push({ ean, articleNumber: line.articleNumber, aantal: line.cartons });
       }
@@ -108,7 +125,7 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
     for (const line of eanFound) {
       const product = products.find((p) => p.ean.trim() === line.ean);
       if (product) {
-        matched.push({ key: product.id, product, aantal: line.aantal, pakbonQtyPerCarton: null });
+        matched.push({ key: product.id, product, aantal: line.aantal, pakbonQtyPerCarton: null, pakbonLines: [] });
         matchedProductIds.add(product.id);
       } else {
         notFound.push({ ean: line.ean, articleNumber: '', aantal: line.aantal });
@@ -117,7 +134,7 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
 
     const remainingProducts = products.filter((p) => !matchedProductIds.has(p.id));
     for (const m of matchProductsByArticleNumber(text, remainingProducts)) {
-      matched.push({ key: m.product.id, product: m.product, aantal: m.aantal, pakbonQtyPerCarton: null });
+      matched.push({ key: m.product.id, product: m.product, aantal: m.aantal, pakbonQtyPerCarton: null, pakbonLines: [] });
     }
 
     setRows(matched);
@@ -177,6 +194,7 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
   const progressLabel = progress ? (STATUS_LABELS[progress.status] ?? progress.status) : null;
   const progressPercent = progress ? Math.round(progress.progress * 100) : 0;
   const mismatches = rows.filter(qtyMismatch);
+  const mixed = rows.filter(mixedQtyPerCarton);
   const totalStickers = rows.reduce((sum, r) => sum + r.aantal, 0);
 
   return (
@@ -261,6 +279,25 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
             </div>
           )}
 
+          {mixed.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
+              <p className="mb-1 font-medium">
+                Verschillend aantal per doos binnen hetzelfde artikel ({mixed.length}): staat meerdere keren op de pakbon
+                met een ander aantal per doos. Alle dozen krijgen nu dezelfde sticker, controleer dit.
+              </p>
+              <ul className="list-inside list-disc space-y-0.5">
+                {mixed.map((r) => (
+                  <li key={r.key}>
+                    {r.product.articleNumber}:{' '}
+                    {r.pakbonLines
+                      .map((l) => `${l.cartons ?? '?'} ${l.cartons === 1 ? 'doos' : 'dozen'} × ${l.qtyPerCarton ?? '?'}`)
+                      .join(', ')}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {mismatches.length > 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
               <p className="mb-1 font-medium">
@@ -316,6 +353,13 @@ export function PakbonUpload({ products, companies, onApply, batchOptions }: Pro
                           onChange={(e) => updateAantal(i, Number(e.target.value) || 1)}
                           className="input w-20 text-right"
                         />
+                        {row.pakbonLines.length > 1 && (
+                          <p
+                            className={`mt-1 text-xs ${mixedQtyPerCarton(row) ? 'font-semibold text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400'}`}
+                          >
+                            {row.pakbonLines.map((l) => l.cartons ?? '?').join(' + ')} ({row.pakbonLines.length} regels)
+                          </p>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <button
