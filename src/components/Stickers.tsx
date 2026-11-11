@@ -46,6 +46,23 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Record<string, number>>({});
+  // Volgorde van de laatst toegepaste pakbon (product-id's), zodat het overzicht
+  // en de geprinte stickers in dezelfde volgorde staan als op de pakbon en je
+  // ze ermee kunt nalopen. Leeg = alfabetisch.
+  const [pakbonOrder, setPakbonOrder] = useState<string[]>([]);
+
+  function clearSelection() {
+    setSelected({});
+    setPakbonOrder([]);
+  }
+
+  // Pakbonvolgorde eerst; daarna (bv. handmatig toegevoegd) alfabetisch.
+  function compareProducts(a: Product, b: Product, order: string[] = pakbonOrder) {
+    const ia = order.indexOf(a.id);
+    const ib = order.indexOf(b.id);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+    return a.articleNumber.localeCompare(b.articleNumber);
+  }
   const [month, setMonth] = useState(currentMonthAbbrev());
   const [year, setYear] = useState(currentYearShort());
   const [noBatch, setNoBatch] = useState(false);
@@ -110,14 +127,8 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
     });
   }
 
-  // Geselecteerde artikelen in dezelfde (alfabetische) volgorde als de lijst.
-  const selectedProducts = useMemo(
-    () =>
-      products
-        .filter((p) => selected[p.id] !== undefined)
-        .sort((a, b) => a.articleNumber.localeCompare(b.articleNumber)),
-    [products, selected],
-  );
+  // Geselecteerde artikelen: in pakbonvolgorde als die er is, anders alfabetisch.
+  const selectedProducts = products.filter((p) => selected[p.id] !== undefined).sort((a, b) => compareProducts(a, b));
 
   const parsedVariableUnits = (productId: string, units: Record<string, string> = variableUnits) => {
     const n = Number(units[productId]);
@@ -136,15 +147,21 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
       nextSelected[match.productId] = match.copies;
       if (match.unitsPerBox) nextUnits[match.productId] = String(match.unitsPerBox);
     }
+    const nextOrder = matches.map((m) => m.productId);
     setSelected(nextSelected);
+    setPakbonOrder(nextOrder);
     setVariableUnits(nextUnits);
     setView('generate');
 
     const missing = products.some((p) => nextSelected[p.id] && p.variableUnits && parsedVariableUnits(p.id, nextUnits) === null);
-    if (generateNow && !missing) handleGenerate(nextSelected, nextUnits);
+    if (generateNow && !missing) handleGenerate(nextSelected, nextUnits, nextOrder);
   }
 
-  function handleGenerate(selection: Record<string, number> = selected, units: Record<string, string> = variableUnits) {
+  function handleGenerate(
+    selection: Record<string, number> = selected,
+    units: Record<string, string> = variableUnits,
+    order: string[] = pakbonOrder,
+  ) {
     // Moet synchroon in de click-handler gebeuren, anders blokkeren pop-upblokkers dit.
     const popup = openPrintWindow('Stickers');
     if (!popup) {
@@ -154,7 +171,9 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
 
     const items: StickerItem[] = [];
     const logItems: StickerPrintItem[] = [];
-    for (const baseProduct of products) {
+    // Stickers in dezelfde volgorde als het overzicht (pakbonvolgorde of alfabetisch).
+    const ordered = products.filter((p) => selection[p.id]).sort((a, b) => compareProducts(a, b, order));
+    for (const baseProduct of ordered) {
       const copies = selection[baseProduct.id];
       if (!copies) continue;
       // Variabel aantal: het hier ingevulde aantal komt op de sticker (en in Historie).
@@ -182,7 +201,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
   async function handlePrint() {
     // Selectie wissen zodra er geprint wordt; het printvoorbeeld zelf blijft
     // werken (dat gebruikt previewItems, niet de selectie).
-    setSelected({});
+    clearSelection();
     setVariableUnits(readLastVariableUnits());
     const error = await onRecordPrint({ batchNumber, includeBarcode, alternativeProduct, items: printLogItems });
     if (error) setPrintError(`Printen is gelukt, maar het loggen in Historie is mislukt: ${error}`);
@@ -322,7 +341,7 @@ export function Stickers({ products, companies, isAdmin, onRecordPrint, prints, 
             itemLabel="stickers"
             onSetCopies={setCopies}
             onRemove={removeSelected}
-            onClear={() => setSelected({})}
+            onClear={clearSelection}
             renderExtra={(product) =>
               product.variableUnits ? (
                 <label className="flex shrink-0 items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
