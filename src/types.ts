@@ -70,5 +70,7 @@ export interface Profile {
   id: string;
   email: string;
   role: Role;
+  // Eigenaar van de tool: rol kan door niemand gewijzigd worden (ook afgedwongen in de database).
+  isOwner: boolean;
   createdAt: string;
 }

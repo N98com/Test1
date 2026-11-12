@@ -7,6 +7,7 @@ interface ProfileRow {
   id: string;
   email: string;
   role: Role;
+  is_owner: boolean;
   created_at: string;
 }
 
@@ -14,6 +15,7 @@ const mapProfile = (row: ProfileRow): Profile => ({
   id: row.id,
   email: row.email,
   role: row.role,
+  isOwner: row.is_owner ?? false,
   createdAt: row.created_at,
 });
 
@@ -42,7 +44,7 @@ export function AccountsAdmin({ currentUserId }: Props) {
   async function fetchProfiles() {
     const { data, error: fetchError } = await supabase
       .from('profiles')
-      .select('id, email, role, created_at')
+      .select('id, email, role, is_owner, created_at')
       .order('created_at');
 
     if (fetchError) {
@@ -185,15 +187,26 @@ export function AccountsAdmin({ currentUserId }: Props) {
                     <td className="px-3 py-2 font-medium text-slate-900 dark:text-slate-100">
                       {profile.email}
                       {isSelf && <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">(jij)</span>}
+                      {profile.isOwner && (
+                        <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                          Eigenaar
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{formatDate(profile.createdAt)}</td>
                     <td className="px-3 py-2">
                       <select
                         value={profile.role}
                         onChange={(e) => changeRole(profile.id, e.target.value as Role)}
-                        disabled={isSelf || updatingId === profile.id}
+                        disabled={isSelf || profile.isOwner || updatingId === profile.id}
                         className="input w-auto disabled:cursor-not-allowed disabled:opacity-60"
-                        title={isSelf ? 'Je kunt je eigen rol niet wijzigen' : undefined}
+                        title={
+                          profile.isOwner
+                            ? 'De rol van de eigenaar kan niet gewijzigd worden'
+                            : isSelf
+                              ? 'Je kunt je eigen rol niet wijzigen'
+                              : undefined
+                        }
                       >
                         <option value="user">Gebruiker</option>
                         <option value="admin">Admin</option>

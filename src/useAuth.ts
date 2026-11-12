@@ -8,11 +8,12 @@ interface ProfileRow {
   id: string;
   email: string;
   role: 'admin' | 'user';
+  is_owner: boolean;
   created_at: string;
 }
 
 function mapProfile(row: ProfileRow): Profile {
-  return { id: row.id, email: row.email, role: row.role, createdAt: row.created_at };
+  return { id: row.id, email: row.email, role: row.role, isOwner: row.is_owner ?? false, createdAt: row.created_at };
 }
 
 export function useAuth() {
@@ -33,7 +34,7 @@ export function useAuth() {
     async function loadProfile(currentUser: User) {
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email, role, created_at')
+        .select('id, email, role, is_owner, created_at')
         .eq('id', currentUser.id)
         .single();
 
